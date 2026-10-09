@@ -48,7 +48,6 @@ export default function App() {
           cloudReels.push(doc.data());
         });
         if (cloudReels.length > 0) {
-          // Combine cloud database reels and pre-loaded unlimited reels
           setReelsList([...cloudReels, ...PRELOADED_GLOBAL_REELS]);
         }
       } catch (e) {
