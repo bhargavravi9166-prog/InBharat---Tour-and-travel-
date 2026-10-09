@@ -11,7 +11,7 @@ export default function App() {
   const [tripDuration, setTripDuration] = useState("3 Days");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  // Reels State with LocalStorage Persistence (Real Data Saving)
+  // Reels State with LocalStorage Persistence
   const [reelsList, setReelsList] = useState(() => {
     const saved = localStorage.getItem('in_bharat_reels');
     if (saved) return JSON.parse(saved);
@@ -33,7 +33,7 @@ export default function App() {
   const [trainTo, setTrainTo] = useState("");
   const [trainResults, setTrainResults] = useState<any[] | null>(null);
 
-  // Real GPS Road Trip Tracker State using Browser Geolocation API
+  // Real GPS Road Trip Tracker State
   const [gpsActive, setGpsActive] = useState(false);
   const [vehicleSpeed, setVehicleSpeed] = useState(0);
   const [totalKm, setTotalKm] = useState(0);
@@ -49,14 +49,14 @@ export default function App() {
 
       watchId = navigator.geolocation.watchPosition(
         (position) => {
-          const speedMs = position.coords.speed; // meters per second
+          const speedMs = position.coords.speed; 
           const speedKmh = speedMs ? Math.round(speedMs * 3.6) : Math.floor(Math.random() * 25) + 35; 
           setVehicleSpeed(speedKmh);
           setTotalKm(prev => Number((prev + 0.2).toFixed(1)));
         },
         (error) => {
           console.error(error);
-          alert("Location permission denied or unavailable. Please enable GPS.");
+          alert("Location permission denied or unavailable.");
           setGpsActive(false);
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -86,9 +86,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Tourism, Heritage, Food & Markets</p>
+          <p className="text-[9px] text-neutral-400">Commercial Tourism Ecosystem</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">100% Real Live</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">Live Ready</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -157,7 +157,7 @@ export default function App() {
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-orange-400">🗺️ Smart AI Tourism & Itinerary Planner</h2>
-              <p className="text-[11px] text-neutral-400">Generate a custom schedule pulling data directly from our master directory.</p>
+              <p className="text-[11px] text-neutral-400">Generate a custom day-by-day travel schedule.</p>
               
               <div className="space-y-2">
                 <label className="text-[10px] text-neutral-400 font-bold">Select Destination</label>
@@ -186,7 +186,19 @@ export default function App() {
               <button 
                 onClick={() => {
                   const data = MASTER_INDIA_TOURISM_DIRECTORY[selectedDest];
-                  setGeneratedItinerary(data);
+                  const daysCount = parseInt(tripDuration) || 3;
+                  const itineraryDays = [];
+                  for (let i = 1; i <= daysCount; i++) {
+                    itineraryDays.push({
+                      day: i,
+                      title: i === 1 ? "Arrival, Darshan & Heritage" : i === 2 ? "Local Food Trails & Markets" : "Scenic Exploration & Culture",
+                      morning: i === 1 ? `Arrive at ${data.City}. Check into hotel.` : `Morning sightseeing around ${data.Name}.`,
+                      afternoon: `Explore local attractions & picnic spot: ${data.picnic_spots.split('\n')[0]}`,
+                      evening: `Enjoy local cuisine & markets: ${data.markets_food.split(',')[0]}`,
+                      budgetTip: data.budget
+                    });
+                  }
+                  setGeneratedItinerary({ ...data, itineraryDays });
                 }}
                 className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-lg shadow-lg">
                 Generate Custom Itinerary Plan
@@ -194,24 +206,32 @@ export default function App() {
             </div>
 
             {generatedItinerary && (
-              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-4">
                 <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-                  <h3 className="font-bold text-amber-400 text-sm">📍 {generatedItinerary.Name} ({tripDuration})</h3>
-                  <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold">Ready</span>
+                  <div>
+                    <h3 className="font-bold text-amber-400 text-sm">📍 {generatedItinerary.Name}</h3>
+                    <p className="text-[10px] text-neutral-400">{generatedItinerary.State} • {tripDuration}</p>
+                  </div>
+                  <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold">AI Generated</span>
                 </div>
                 
-                <div className="space-y-3 text-neutral-300">
-                  <div>
-                    <p className="font-bold text-orange-400 mb-1">🏛️ History & Significance</p>
-                    <p className="text-[11px]">{generatedItinerary.history_geo_political}</p>
+                <div className="space-y-3">
+                  <div className="bg-neutral-950 p-3 rounded-xl border border-neutral-800 space-y-1">
+                    <p className="font-bold text-orange-400">🚗 Transport Roadmap:</p>
+                    <p className="text-[11px] text-neutral-300">{generatedItinerary.transport_roadmap}</p>
                   </div>
-                  <div>
-                    <p className="font-bold text-amber-400 mb-1">🚗 Transport Roadmap</p>
-                    <p className="text-[11px]">{generatedItinerary.transport_roadmap}</p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-rose-400 mb-1">🛍️ Food & Markets</p>
-                    <p className="text-[11px]">{generatedItinerary.markets_food}</p>
+
+                  <div className="space-y-3 pt-2">
+                    <h4 className="font-bold text-white text-xs">🗓️ Day-by-Day Schedule:</h4>
+                    {generatedItinerary.itineraryDays?.map((d: any) => (
+                      <div key={d.day} className="bg-neutral-950 p-3 rounded-xl border border-neutral-800 space-y-2">
+                        <div className="font-bold text-amber-400 border-b border-neutral-900 pb-1">Day {d.day}: {d.title}</div>
+                        <p className="text-[11px] text-neutral-300">🌅 <strong>Morning:</strong> {d.morning}</p>
+                        <p className="text-[11px] text-neutral-300">☀️ <strong>Afternoon:</strong> {d.afternoon}</p>
+                        <p className="text-[11px] text-neutral-300">🌙 <strong>Evening:</strong> {d.evening}</p>
+                        <p className="text-[10px] text-orange-400 pt-1">💰 {d.budgetTip}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -219,32 +239,37 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS (Persistent Storage) */}
+        {/* TAB 3: REELS (Gallery Upload Restored) */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-2">
-              <h2 className="font-bold text-orange-400">📹 Upload Travel & Food Reel</h2>
+              <h2 className="font-bold text-orange-400">📹 Upload Video from Gallery</h2>
               <input 
-                type="text" 
-                placeholder="MP4 Video URL..." 
-                value={newReelUrl} 
-                onChange={(e) => setNewReelUrl(e.target.value)}
-                className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
+                type="file" 
+                accept="video/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const videoUrl = URL.createObjectURL(file);
+                    setNewReelUrl(videoUrl);
+                  }
+                }}
+                className="w-full p-2 bg-neutral-950 rounded-lg border border-neutral-800 text-white text-[11px] file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white"
               />
               <input 
                 type="text" 
-                placeholder="Caption & Location..." 
+                placeholder="Caption & Location (e.g. Jaipur Fort)..." 
                 value={newReelCaption} 
                 onChange={(e) => setNewReelCaption(e.target.value)}
                 className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
               />
               <button 
                 onClick={() => {
-                  if(!newReelUrl || !newReelCaption) return alert("Enter video link & caption!");
+                  if(!newReelUrl || !newReelCaption) return alert("Please select a video from gallery and enter a caption!");
                   const updatedReels = [{ id: Date.now(), user: "ravi_bharggav", caption: newReelCaption, likes: 1, video: newReelUrl, location: "In Bharat" }, ...reelsList];
                   setReelsList(updatedReels);
                   setNewReelUrl(""); setNewReelCaption("");
-                  alert("Reel Published & Saved Successfully!");
+                  alert("Reel Published Successfully!");
                 }}
                 className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg">
                 Post Travel Reel
@@ -266,21 +291,21 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: TRAVEL TOOLS (Real Geolocation GPS & Ixigo) */}
+        {/* TAB 4: TRAVEL TOOLS */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-blue-400">🚂 Ixigo Style Train Booking</h2>
               <input 
                 type="text" 
-                placeholder="From Station (e.g. NDLS)" 
+                placeholder="From Station (e.g. New Delhi - NDLS)" 
                 value={trainFrom} 
                 onChange={(e) => setTrainFrom(e.target.value)}
                 className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
               />
               <input 
                 type="text" 
-                placeholder="To Station (e.g. HW / DDN)" 
+                placeholder="To Station (e.g. Varanasi - BSB)" 
                 value={trainTo} 
                 onChange={(e) => setTrainTo(e.target.value)}
                 className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
@@ -289,8 +314,8 @@ export default function App() {
                 onClick={() => {
                   if(!trainFrom || !trainTo) return alert("Please enter both stations!");
                   setTrainResults([
-                    { name: "Vande Bharat Express", timing: "06:00 AM → 02:00 PM", price: "₹2,100" },
-                    { name: "Express Special", timing: "06:25 PM → 06:40 AM", price: "₹1,250" }
+                    { id: 1, name: "Vande Bharat Express", timing: "06:00 AM → 02:00 PM", class: "CC", price: "₹2,100" },
+                    { id: 2, name: "Shiv Ganga Express", timing: "06:25 PM → 06:40 AM", class: "3A", price: "₹1,250" }
                   ]);
                 }}
                 className="w-full py-2.5 bg-blue-600 font-bold text-white rounded-xl shadow-lg">
@@ -299,11 +324,11 @@ export default function App() {
 
               {trainResults && (
                 <div className="space-y-2 pt-2 border-t border-neutral-800">
-                  {trainResults.map((t, idx) => (
-                    <div key={idx} className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 flex justify-between items-center">
+                  {trainResults.map((t) => (
+                    <div key={t.id} className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 flex justify-between items-center">
                       <div>
                         <p className="font-bold text-white">{t.name}</p>
-                        <p className="text-[10px] text-neutral-400">{t.timing}</p>
+                        <p className="text-[10px] text-neutral-400">{t.timing} • {t.class}</p>
                       </div>
                       <button onClick={()=>alert(`Booking Confirmed for ${t.name}!`)} className="bg-orange-500 px-3 py-1.5 rounded-lg font-bold text-white">Book {t.price}</button>
                     </div>
@@ -314,8 +339,6 @@ export default function App() {
 
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-emerald-400">🚗 Real GPS Road Trip Tracker</h2>
-              <p className="text-[11px] text-neutral-400">Uses your device's live browser GPS sensor to track real speed and distance.</p>
-              
               <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-center">
                 <div>
                   <p className="text-[10px] text-neutral-400">Live Speed</p>
@@ -345,7 +368,7 @@ export default function App() {
               </div>
               <div>
                 <h2 className="font-bold text-sm text-white">Ravi Bharggav</h2>
-                <p className="text-[11px] text-orange-400">Quality Engineer & Founder</p>
+                <p className="text-[11px] text-orange-400">Founder & Managing Director</p>
               </div>
             </div>
           </div>
@@ -367,13 +390,11 @@ export default function App() {
                 <p className="font-bold text-orange-400 mb-1">🏛️ History & Geo-Political:</p>
                 <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].history_geo_political}</p>
               </div>
-
               <div>
                 <p className="font-bold text-amber-400 mb-1">🍲 Picnic Spots & Food:</p>
                 <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].picnic_spots}</p>
                 <p className="text-[11px] mt-1">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].markets_food}</p>
               </div>
-
               <div>
                 <p className="font-bold text-rose-400 mb-1">📞 Helpline & Culture:</p>
                 <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].culture_helpline}</p>
