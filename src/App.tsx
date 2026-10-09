@@ -3,15 +3,14 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
-// Firebase Configuration Linked
+// Firebase Configuration using Vercel Environment Variables with safe fallbacks
 const firebaseConfig = {
-  apiKey: "AIzaSyB4JsGbrXH6F54I-9_dUUID6xp9wd6kUEYE",
-  authDomain: "inbharat-pro-36432.firebaseapp.com",
-  projectId: "inbharat-pro-36432",
-  storageBucket: "inbharat-pro-36432.firebasestorage.app",
-  messagingSenderId: "309427976197",
-  appId: "1:309427976197:web:243fa69f7125f6e448846c",
-  measurementId: "G-2SCRX5ZGDF"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyB4JsGbrXH6F54I-9_dUUID6xp9wd6kUEYE",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "inbharat-pro-36432.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "inbharat-pro-36432",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "inbharat-pro-36432.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "309427976197",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:309427976197:web:243fa69f7125f6e448846c"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -256,21 +255,21 @@ export default function App() {
               ))}
             </div>
 
-            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+            <div className="space-y-4 bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
               <h2 className="font-bold text-sm text-emerald-400">🗺️ Google Maps Navigation</h2>
               <input type="text" placeholder="From" value={navSource} onChange={(e) => setNavSource(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <input type="text" placeholder="To" value={navDestination} onChange={(e) => setNavDestination(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <a href={navSource && navDestination ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(navSource)}&destination=${encodeURIComponent(navDestination)}` : "#"} target="_blank" rel="noopener noreferrer" className="block w-full py-2.5 bg-emerald-600 font-bold text-white rounded-xl text-center">Open Maps 🚗</a>
             </div>
 
-            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+            <div className="space-y-4 bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
               <h2 className="font-bold text-sm text-blue-400">🚂 IRCTC Train Booking</h2>
               <input type="text" placeholder="From Station" value={trainFrom} onChange={(e) => setTrainFrom(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <input type="text" placeholder="To Station" value={trainTo} onChange={(e) => setTrainTo(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <a href="https://www.irctc.co.in" target="_blank" rel="noopener noreferrer" className="block text-center bg-orange-500 py-2.5 rounded-xl font-bold text-white">Book on IRCTC</a>
             </div>
 
-            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+            <div className="space-y-4 bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
               <h2 className="font-bold text-sm text-emerald-400">🚗 Live GPS Tracker</h2>
               <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl text-center">
                 <div><p className="text-[10px]">Speed</p><h3 className="text-xl font-black text-emerald-400">{vehicleSpeed} km/h</h3></div>
