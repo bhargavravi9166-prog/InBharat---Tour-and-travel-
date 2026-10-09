@@ -1394,7 +1394,7 @@ export const MASTER_INDIA_TOURISM_DIRECTORY: Record<string, {
     history_geo_political: "The holy land where the epic Mahabharata war was fought and Lord Krishna recited the Bhagavad Gita to Arjuna at Jyotisar.",
     picnic_spots: "🛕 Brahma Sarovar & Jyotisar (Birthplace of Bhagavad Gita banyan tree)\n🏛️ Sannihit Sarovar & Bhishma Kund at Narkati\n🌿 Kalpana Chawla Memorial Planetarium\n🏞️ Sheikh Chilli's Tomb (Mughal architectural complex)",
     transport_roadmap: "Kurukshetra Junction Railway Station & Chandigarh Airport (90 km away).",
-    hotels_booking: "Haryana Tourism Neelkanth
+    hotels_booking: "Haryana Tourism Neelkanth"
  },  
   "delhi_akshardham_lotus": {
     Name: "Akshardham Temple & Lotus Temple Delhi",
