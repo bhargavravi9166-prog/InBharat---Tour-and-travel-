@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
+
+// Firebase Configuration Linked
+const firebaseConfig = {
+  apiKey: "AIzaSyB4JsGbrXH6F54I-9_dUUID6xp9wd6kUEYE",
+  authDomain: "inbharat-pro-36432.firebaseapp.com",
+  projectId: "inbharat-pro-36432",
+  storageBucket: "inbharat-pro-36432.firebasestorage.app",
+  messagingSenderId: "309427976197",
+  appId: "1:309427976197:web:243fa69f7125f6e448846c",
+  measurementId: "G-2SCRX5ZGDF"
+};
+
+// Initialize Firebase & Storage
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 
 export default function App() {
   const [tab, setTab] = useState<'home' | 'planner' | 'reels' | 'travel' | 'profile'>('home');
@@ -14,7 +31,7 @@ export default function App() {
   // Reels State with LocalStorage Persistence
   const [reelsList, setReelsList] = useState(() => {
     try {
-      const saved = localStorage.getItem('in_bharat_reels');
+      const saved = localStorage.getItem('in_bharat_cloud_reels');
       if (saved) return JSON.parse(saved);
     } catch (e) {
       console.error(e);
@@ -26,11 +43,12 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('in_bharat_reels', JSON.stringify(reelsList));
+    localStorage.setItem('in_bharat_cloud_reels', JSON.stringify(reelsList));
   }, [reelsList]);
 
-  const [newReelUrl, setNewReelUrl] = useState("");
+  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
   const [newReelCaption, setNewReelCaption] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   // Ixigo & IRCTC Booking State
   const [trainFrom, setTrainFrom] = useState("");
@@ -82,6 +100,41 @@ export default function App() {
     };
   }, [gpsActive]);
 
+  // Handle Cloud Upload to Firebase Storage
+  const handleCloudUpload = async () => {
+    if (!selectedVideoFile || !newReelCaption) {
+      alert("Please select a video from gallery and enter a caption!");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `reels/${Date.now()}_${selectedVideoFile.name}`);
+      const snapshot = await uploadBytes(storageRef, selectedVideoFile);
+      const permanentDownloadUrl = await getDownloadURL(snapshot.ref);
+
+      const newReel = {
+        id: Date.now(),
+        user: "ravi_bharggav",
+        caption: newReelCaption,
+        likes: 1,
+        video: permanentDownloadUrl,
+        location: "In Bharat Cloud"
+      };
+
+      const updated = [newReel, ...reelsList];
+      setReelsList(updated);
+      setSelectedVideoFile(null);
+      setNewReelCaption("");
+      alert("🎉 Video successfully uploaded to Firebase Cloud & Saved Permanently!");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Upload failed. Please check internet connection.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const filteredDestinations = Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).filter(([_, data]) =>
     data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     data.City.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -98,9 +151,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">All-in-One Hotels, Trains, GPS & Maps</p>
+          <p className="text-[9px] text-neutral-400">Firebase Cloud Storage Connected</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Cloud Active</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -251,20 +304,17 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS (Gallery Upload with Audio) */}
+        {/* TAB 3: REELS (Cloud Gallery Upload - Never Expires) */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-2">
-              <h2 className="font-bold text-orange-400">📹 Upload Video from Gallery</h2>
+              <h2 className="font-bold text-orange-400">📹 Select Video from Gallery & Upload to Cloud</h2>
               <input 
                 type="file" 
                 accept="video/*"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    const videoUrl = URL.createObjectURL(file);
-                    setNewReelUrl(videoUrl);
-                  }
+                  if (file) setSelectedVideoFile(file);
                 }}
                 className="w-full p-2 bg-neutral-950 rounded-lg border border-neutral-800 text-white text-[11px] file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white"
               />
@@ -276,15 +326,10 @@ export default function App() {
                 className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
               />
               <button 
-                onClick={() => {
-                  if(!newReelUrl || !newReelCaption) return alert("Please select a video from gallery and enter a caption!");
-                  const updatedReels = [{ id: Date.now(), user: "ravi_bharggav", caption: newReelCaption, likes: 1, video: newReelUrl, location: "In Bharat" }, ...reelsList];
-                  setReelsList(updatedReels);
-                  setNewReelUrl(""); setNewReelCaption("");
-                  alert("Reel Published Successfully!");
-                }}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg active:scale-95 transition-transform">
-                Post Travel Reel
+                onClick={handleCloudUpload}
+                disabled={uploading}
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg active:scale-95 transition-transform disabled:opacity-50">
+                {uploading ? '⏳ Uploading to Cloud...' : '☁️ Upload & Post Permanent Reel'}
               </button>
             </div>
 
@@ -303,15 +348,13 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: TRAVEL TOOLS (Hotels, IRCTC, Google Maps & GPS) */}
+        {/* TAB 4: TRAVEL TOOLS */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             
             {/* HOTEL & STAY BOOKING */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-amber-400">🏨 Hotel & Stay Booking Gateway</h2>
-              <p className="text-[11px] text-neutral-400">Search best hotels, resorts, and homestays across India.</p>
-              
               <input 
                 type="text" 
                 placeholder="Enter City or Destination (e.g. Jaipur / Mount Abu)" 
@@ -352,7 +395,7 @@ export default function App() {
               )}
             </div>
 
-            {/* GOOGLE MAPS DIRECT ROUTE NAVIGATION */}
+            {/* GOOGLE MAPS NAVIGATION */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-emerald-400">🗺️ Google Maps Direct Route & Navigation</h2>
               <input 
