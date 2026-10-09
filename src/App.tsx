@@ -17,9 +17,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const MASTER_REELS_POOL = [
+// Pre-loaded Unlimited Global Forts & Picnic Spot Reels for All Users
+const PRELOADED_GLOBAL_REELS = [
   { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, Uttarakhand" },
-  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, Rajasthan" }
+  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, Rajasthan" },
+  { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", video: "https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-41631-large.mp4", location: "New Delhi" },
+  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4", location: "Mount Abu, Rajasthan" }
 ];
 
 export default function App() {
@@ -30,13 +33,14 @@ export default function App() {
   const [selectedDest, setSelectedDest] = useState("kedarnath");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  const [reelsList, setReelsList] = useState<any[]>(MASTER_REELS_POOL);
+  const [reelsList, setReelsList] = useState<any[]>(PRELOADED_GLOBAL_REELS);
   const [newReelUrl, setNewReelUrl] = useState("");
   const [newReelCaption, setNewReelCaption] = useState("");
+  const [uploading, setUploading] = useState(false);
 
-  // Fetch from Firebase Firestore on load
+  // Fetch Global Cloud Reels from Firebase & Merge with Pre-loaded Pool
   useEffect(() => {
-    const fetchCloudReels = async () => {
+    const fetchGlobalCloudReels = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "reels"));
         const cloudReels: any[] = [];
@@ -44,27 +48,42 @@ export default function App() {
           cloudReels.push(doc.data());
         });
         if (cloudReels.length > 0) {
-          setReelsList([...cloudReels, ...MASTER_REELS_POOL]);
+          // Combine cloud database reels and pre-loaded unlimited reels
+          setReelsList([...cloudReels, ...PRELOADED_GLOBAL_REELS]);
         }
       } catch (e) {
-        console.error("Cloud fetch error:", e);
+        console.error("Cloud sync error, keeping pre-loaded reels:", e);
       }
     };
-    fetchCloudReels();
+    fetchGlobalCloudReels();
   }, []);
 
-  const handleCloudPublish = async () => {
-    if (!newReelUrl || !newReelCaption) return alert("Please enter both URL and Caption!");
+  const handleGlobalPublish = async () => {
+    if (!newReelUrl || !newReelCaption) {
+      alert("Please enter both Video URL and Caption/Location!");
+      return;
+    }
+
+    setUploading(true);
     try {
-      const newReel = { id: Date.now(), user: "ravi_bharggav", caption: newReelCaption, video: newReelUrl, location: "In Bharat Pro" };
+      const newReel = { 
+        id: Date.now(), 
+        user: "ravi_bharggav", 
+        caption: newReelCaption, 
+        video: newReelUrl, 
+        location: "In Bharat Pro Global" 
+      };
+
       await addDoc(collection(db, "reels"), newReel);
       setReelsList([newReel, ...reelsList]);
       setNewReelUrl("");
       setNewReelCaption("");
-      alert("🎉 Successfully published to Firebase Cloud!");
+      alert("🎉 Reel successfully published to Global Cloud for all users!");
     } catch (e) {
-      console.error(e);
-      alert("Failed to upload to cloud.");
+      console.error("Publish error:", e);
+      alert("Failed to publish. Check connection.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -126,9 +145,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Tourism Data & Cloud Connected</p>
+          <p className="text-[9px] text-neutral-400">Global Forts, Reels & Tourism Directory</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Live</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Global Live</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -140,7 +159,7 @@ export default function App() {
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400 text-xs">🔍</span>
               <input 
                 type="text" 
-                placeholder="Search destinations..." 
+                placeholder="Search destinations from tourismdata..." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 bg-neutral-900 rounded-xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all"
@@ -197,10 +216,15 @@ export default function App() {
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-orange-400">🎬 Upload to Cloud Database</h2>
-              <input type="text" placeholder="Video URL..." value={newReelUrl} onChange={(e) => setNewReelUrl(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
-              <input type="text" placeholder="Location..." value={newReelCaption} onChange={(e) => setNewReelCaption(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
-              <button onClick={handleCloudPublish} className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg">Publish to Cloud</button>
+              <h2 className="font-bold text-orange-400">🎬 Global Forts & Picnic Reels Feed</h2>
+              <input type="text" placeholder="Video MP4 URL..." value={newReelUrl} onChange={(e) => setNewReelUrl(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
+              <input type="text" placeholder="Spot Name & Location..." value={newReelCaption} onChange={(e) => setNewReelCaption(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
+              <button 
+                onClick={handleGlobalPublish} 
+                disabled={uploading}
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg disabled:opacity-50">
+                {uploading ? "Publishing to Global Feed..." : "Publish to Global Feed ☁️"}
+              </button>
             </div>
 
             <div className="space-y-4">
