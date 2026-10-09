@@ -1,27 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
-// Firebase Configuration using Vercel Environment Variables with safe fallbacks
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyB4JsGbrXH6F54I-9_dUUID6xp9wd6kUEYE",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "inbharat-pro-36432.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "inbharat-pro-36432",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "inbharat-pro-36432.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "309427976197",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:309427976197:web:243fa69f7125f6e448846c"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Pre-loaded Unlimited Global Forts & Picnic Spot Reels for All Users
-const PRELOADED_GLOBAL_REELS = [
+// Master Pool of Unlimited Global Forts, Monuments & Picnic Spot Reels (Cloud CDN Links)
+const MASTER_GLOBAL_REELS_POOL = [
   { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, Uttarakhand" },
   { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, Rajasthan" },
   { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", video: "https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-41631-large.mp4", location: "New Delhi" },
-  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4", location: "Mount Abu, Rajasthan" }
+  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4", location: "Mount Abu, Rajasthan" },
+  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", video: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4", location: "Raigad, Maharashtra" },
+  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", video: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1185-large.mp4", location: "Alleppey, Kerala" },
+  { id: 7, user: "agra_taj", caption: "Symbol of Love - The Magnificent Taj Mahal 🤍", video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-at-sunset-41558-large.mp4", location: "Agra, Uttar Pradesh" },
+  { id: 8, user: "goa_vibe", caption: "Golden Sunset at Palolem Beach 🌊", video: "https://assets.mixkit.co/videos/preview/mixkit-sun-setting-over-the-sea-41639-large.mp4", location: "Goa" }
 ];
 
 export default function App() {
@@ -32,57 +21,14 @@ export default function App() {
   const [selectedDest, setSelectedDest] = useState("kedarnath");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  const [reelsList, setReelsList] = useState<any[]>(PRELOADED_GLOBAL_REELS);
-  const [newReelUrl, setNewReelUrl] = useState("");
-  const [newReelCaption, setNewReelCaption] = useState("");
-  const [uploading, setUploading] = useState(false);
+  // Unlimited Global Reels with Smart Auto-Shuffle on Every Load/Refresh
+  const [reelsList, setReelsList] = useState(() => {
+    return [...MASTER_GLOBAL_REELS_POOL].sort(() => Math.random() - 0.5);
+  });
 
-  // Fetch Global Cloud Reels from Firebase & Merge with Pre-loaded Pool
-  useEffect(() => {
-    const fetchGlobalCloudReels = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "reels"));
-        const cloudReels: any[] = [];
-        querySnapshot.forEach((doc) => {
-          cloudReels.push(doc.data());
-        });
-        if (cloudReels.length > 0) {
-          setReelsList([...cloudReels, ...PRELOADED_GLOBAL_REELS]);
-        }
-      } catch (e) {
-        console.error("Cloud sync error, keeping pre-loaded reels:", e);
-      }
-    };
-    fetchGlobalCloudReels();
-  }, []);
-
-  const handleGlobalPublish = async () => {
-    if (!newReelUrl || !newReelCaption) {
-      alert("Please enter both Video URL and Caption/Location!");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const newReel = { 
-        id: Date.now(), 
-        user: "ravi_bharggav", 
-        caption: newReelCaption, 
-        video: newReelUrl, 
-        location: "In Bharat Pro Global" 
-      };
-
-      await addDoc(collection(db, "reels"), newReel);
-      setReelsList([newReel, ...reelsList]);
-      setNewReelUrl("");
-      setNewReelCaption("");
-      alert("🎉 Reel successfully published to Global Cloud for all users!");
-    } catch (e) {
-      console.error("Publish error:", e);
-      alert("Failed to publish. Check connection.");
-    } finally {
-      setUploading(false);
-    }
+  const handleRefreshFeed = () => {
+    const shuffled = [...MASTER_GLOBAL_REELS_POOL].sort(() => Math.random() - 0.5);
+    setReelsList(shuffled);
   };
 
   const [trainFrom, setTrainFrom] = useState("");
@@ -143,9 +89,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Global Forts, Reels & Tourism Directory</p>
+          <p className="text-[9px] text-neutral-400">Unlimited Global Forts & Tourism Feed</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Global Live</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -210,27 +156,27 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS */}
+        {/* TAB 3: REELS (Clean Global Feed with Refresh Button) */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
-            <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-orange-400">🎬 Global Forts & Picnic Reels Feed</h2>
-              <input type="text" placeholder="Video MP4 URL..." value={newReelUrl} onChange={(e) => setNewReelUrl(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
-              <input type="text" placeholder="Spot Name & Location..." value={newReelCaption} onChange={(e) => setNewReelCaption(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
+            <div className="flex justify-between items-center bg-neutral-900 p-3 rounded-xl border border-neutral-800">
+              <div>
+                <h2 className="font-bold text-orange-400 text-sm">🎬 Global Forts & Picnic Reels</h2>
+                <p className="text-[10px] text-neutral-400">Unlimited pre-loaded server feed</p>
+              </div>
               <button 
-                onClick={handleGlobalPublish} 
-                disabled={uploading}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg disabled:opacity-50">
-                {uploading ? "Publishing to Global Feed..." : "Publish to Global Feed ☁️"}
+                onClick={handleRefreshFeed}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs active:scale-95 transition-transform shadow">
+                🔄 Refresh Feed
               </button>
             </div>
 
             <div className="space-y-4">
               {reelsList.map((r: any, idx: number) => (
-                <div key={idx} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center">
+                <div key={idx} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center shadow-xl">
                   <video src={r.video} controls playsInline preload="metadata" className="w-full h-full object-cover"/>
-                  <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white">@{r.user}</div>
-                  <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl">
+                  <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md">@{r.user}</div>
+                  <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl space-y-1">
                     <p className="text-xs font-semibold text-white">{r.caption}</p>
                     <p className="text-[10px] text-neutral-300">📍 {r.location}</p>
                   </div>
@@ -255,21 +201,21 @@ export default function App() {
               ))}
             </div>
 
-            <div className="space-y-4 bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-emerald-400">🗺️ Google Maps Navigation</h2>
               <input type="text" placeholder="From" value={navSource} onChange={(e) => setNavSource(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <input type="text" placeholder="To" value={navDestination} onChange={(e) => setNavDestination(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <a href={navSource && navDestination ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(navSource)}&destination=${encodeURIComponent(navDestination)}` : "#"} target="_blank" rel="noopener noreferrer" className="block w-full py-2.5 bg-emerald-600 font-bold text-white rounded-xl text-center">Open Maps 🚗</a>
             </div>
 
-            <div className="space-y-4 bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-blue-400">🚂 IRCTC Train Booking</h2>
               <input type="text" placeholder="From Station" value={trainFrom} onChange={(e) => setTrainFrom(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <input type="text" placeholder="To Station" value={trainTo} onChange={(e) => setTrainTo(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <a href="https://www.irctc.co.in" target="_blank" rel="noopener noreferrer" className="block text-center bg-orange-500 py-2.5 rounded-xl font-bold text-white">Book on IRCTC</a>
             </div>
 
-            <div className="space-y-4 bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-emerald-400">🚗 Live GPS Tracker</h2>
               <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl text-center">
                 <div><p className="text-[10px]">Speed</p><h3 className="text-xl font-black text-emerald-400">{vehicleSpeed} km/h</h3></div>
