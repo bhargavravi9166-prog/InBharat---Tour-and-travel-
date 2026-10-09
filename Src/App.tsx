@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TOURISM_ECOSYSTEM } from './tourismdata';
+import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
 export default function App() {
   const [tab, setTab] = useState<'home' | 'planner' | 'reels' | 'travel' | 'profile'>('home');
@@ -7,7 +7,7 @@ export default function App() {
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
   // AI Trip Planner State
-  const [selectedDest, setSelectedDest] = useState("varanasi");
+  const [selectedDest, setSelectedDest] = useState("kedarnath");
   const [tripDuration, setTripDuration] = useState("3 Days");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
@@ -16,8 +16,8 @@ export default function App() {
     const saved = localStorage.getItem('in_bharat_reels');
     if (saved) return JSON.parse(saved);
     return [
-      { id: 1, user: "incredible_india", caption: "Ganga Aarti Grand View at Dashashwamedh Ghat ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Varanasi, UP" },
-      { id: 2, user: "rajasthan_tourism", caption: "Sunset reflection at Amer Fort walls 🏰", likes: 2150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, RJ" }
+      { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, UK" },
+      { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view 🏰", likes: 2150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Badrinath, UK" }
     ];
   });
 
@@ -70,10 +70,11 @@ export default function App() {
     };
   }, [gpsActive]);
 
-  const filteredDestinations = Object.entries(TOURISM_ECOSYSTEM).filter(([_, data]) =>
-    data.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    data.state.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    data.tagline.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDestinations = Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).filter(([_, data]) =>
+    data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    data.City.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    data.State.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    data.Type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -99,7 +100,7 @@ export default function App() {
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400 text-xs">🔍</span>
               <input 
                 type="text" 
-                placeholder="Search destinations, states, or temples..." 
+                placeholder="Search destinations, states, or shrines..." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 bg-neutral-900 rounded-xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500"
@@ -113,30 +114,28 @@ export default function App() {
                 filteredDestinations.map(([key, dest]) => (
                   <div key={key} className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
                     <div className="relative h-52 bg-neutral-950">
-                      <img src={dest.image} alt="" className="w-full h-full object-cover" />
+                      <img src={dest.image_url} alt="" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent"></div>
                       <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-orange-400 font-bold border border-neutral-800">
                         ☀️ {dest.weather}
                       </div>
                       <div className="absolute bottom-3 left-3 right-3">
-                        <h2 className="text-base font-bold text-white">{dest.name} <span className="text-xs text-orange-400 font-normal">({dest.state})</span></h2>
-                        <p className="text-[10px] text-neutral-300">{dest.tagline}</p>
+                        <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
+                        <p className="text-[10px] text-neutral-300">Type: {dest.Type}</p>
                       </div>
                     </div>
 
                     <div className="px-3 space-y-3 text-xs">
-                      <p className="text-neutral-300 text-[11px] leading-relaxed">{dest.description}</p>
+                      <p className="text-neutral-300 text-[11px] leading-relaxed">{dest.history_geo_political}</p>
                       
                       <div className="grid grid-cols-2 gap-2">
                         <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
-                          <p className="font-bold text-amber-400 mb-1">🍲 Famous Food</p>
-                          <p className="text-[10px] text-neutral-300 truncate">{dest.foods[0].dish}</p>
-                          <span className="text-[9px] text-orange-400 font-semibold">{dest.foods[0].price}</span>
+                          <p className="font-bold text-amber-400 mb-1">🍲 Local Food</p>
+                          <p className="text-[10px] text-neutral-300 truncate">{dest.markets_food}</p>
                         </div>
                         <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
-                          <p className="font-bold text-rose-400 mb-1">🛍️ Local Market</p>
-                          <p className="text-[10px] text-neutral-300 truncate">{dest.markets[0].market}</p>
-                          <span className="text-[9px] text-neutral-400">{dest.markets[0].location}</span>
+                          <p className="font-bold text-rose-400 mb-1">💰 Budget Info</p>
+                          <p className="text-[10px] text-neutral-300 truncate">{dest.budget}</p>
                         </div>
                       </div>
 
@@ -158,7 +157,7 @@ export default function App() {
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-orange-400">🗺️ Smart AI Tourism & Itinerary Planner</h2>
-              <p className="text-[11px] text-neutral-400">Generate a custom schedule pulling data directly from our tourism ecosystem.</p>
+              <p className="text-[11px] text-neutral-400">Generate a custom schedule pulling data directly from our master directory.</p>
               
               <div className="space-y-2">
                 <label className="text-[10px] text-neutral-400 font-bold">Select Destination</label>
@@ -166,8 +165,8 @@ export default function App() {
                   value={selectedDest} 
                   onChange={(e) => setSelectedDest(e.target.value)}
                   className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white">
-                  {Object.entries(TOURISM_ECOSYSTEM).map(([k, d]) => (
-                    <option key={k} value={k}>{d.name} ({d.state})</option>
+                  {Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).map(([k, d]) => (
+                    <option key={k} value={k}>{d.Name} ({d.State})</option>
                   ))}
                 </select>
               </div>
@@ -186,10 +185,10 @@ export default function App() {
 
               <button 
                 onClick={() => {
-                  const data = TOURISM_ECOSYSTEM[selectedDest];
+                  const data = MASTER_INDIA_TOURISM_DIRECTORY[selectedDest];
                   setGeneratedItinerary(data);
                 }}
-                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg">
+                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-lg shadow-lg">
                 Generate Custom Itinerary Plan
               </button>
             </div>
@@ -197,22 +196,22 @@ export default function App() {
             {generatedItinerary && (
               <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
                 <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-                  <h3 className="font-bold text-amber-400 text-sm">📍 {generatedItinerary.name} ({tripDuration})</h3>
+                  <h3 className="font-bold text-amber-400 text-sm">📍 {generatedItinerary.Name} ({tripDuration})</h3>
                   <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold">Ready</span>
                 </div>
                 
                 <div className="space-y-3 text-neutral-300">
                   <div>
-                    <p className="font-bold text-orange-400 mb-1">🏛️ Day 1: Heritage & Temples</p>
-                    <p className="text-[11px]">• Morning Visit: <strong>{generatedItinerary.temples[0].name}</strong> ({generatedItinerary.temples[0].significance})</p>
+                    <p className="font-bold text-orange-400 mb-1">🏛️ History & Significance</p>
+                    <p className="text-[11px]">{generatedItinerary.history_geo_political}</p>
                   </div>
                   <div>
-                    <p className="font-bold text-amber-400 mb-1">🍲 Day 2: Food Exploration</p>
-                    <p className="text-[11px]">• Must-Try: <strong>{generatedItinerary.foods[0].dish}</strong> at {generatedItinerary.foods[0].spot} ({generatedItinerary.foods[0].price})</p>
+                    <p className="font-bold text-amber-400 mb-1">🚗 Transport Roadmap</p>
+                    <p className="text-[11px]">{generatedItinerary.transport_roadmap}</p>
                   </div>
                   <div>
-                    <p className="font-bold text-rose-400 mb-1">🛍️ Day 3: Shopping & Markets</p>
-                    <p className="text-[11px]">• Explore: <strong>{generatedItinerary.markets[0].market}</strong> for {generatedItinerary.markets[0].specialty}</p>
+                    <p className="font-bold text-rose-400 mb-1">🛍️ Food & Markets</p>
+                    <p className="text-[11px]">{generatedItinerary.markets_food}</p>
                   </div>
                 </div>
               </div>
@@ -234,7 +233,7 @@ export default function App() {
               />
               <input 
                 type="text" 
-                placeholder="Caption & Location (e.g. Varanasi Ghats)..." 
+                placeholder="Caption & Location..." 
                 value={newReelCaption} 
                 onChange={(e) => setNewReelCaption(e.target.value)}
                 className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
@@ -281,7 +280,7 @@ export default function App() {
               />
               <input 
                 type="text" 
-                placeholder="To Station (e.g. BSB / JP)" 
+                placeholder="To Station (e.g. HW / DDN)" 
                 value={trainTo} 
                 onChange={(e) => setTrainTo(e.target.value)}
                 className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
@@ -290,8 +289,8 @@ export default function App() {
                 onClick={() => {
                   if(!trainFrom || !trainTo) return alert("Please enter both stations!");
                   setTrainResults([
-                    { name: "Vande Bharat Express (22436)", timing: "06:00 AM → 02:00 PM", price: "₹2,100" },
-                    { name: "Shiv Ganga Express (12560)", timing: "06:25 PM → 06:40 AM", price: "₹1,250" }
+                    { name: "Vande Bharat Express", timing: "06:00 AM → 02:00 PM", price: "₹2,100" },
+                    { name: "Express Special", timing: "06:25 PM → 06:40 AM", price: "₹1,250" }
                   ]);
                 }}
                 className="w-full py-2.5 bg-blue-600 font-bold text-white rounded-xl shadow-lg">
@@ -359,30 +358,25 @@ export default function App() {
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-              <h3 className="font-bold text-sm text-white">{TOURISM_ECOSYSTEM[activeCityKey].name} Guide</h3>
+              <h3 className="font-bold text-sm text-white">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].Name} Guide</h3>
               <button onClick={() => setActiveCityKey(null)} className="text-neutral-400 font-bold text-base">✕</button>
             </div>
 
             <div className="space-y-3 text-neutral-300">
               <div>
-                <p className="font-bold text-orange-400 mb-1">🏛️ Heritage & Temples:</p>
-                {TOURISM_ECOSYSTEM[activeCityKey].temples.map((t: any, idx: number) => (
-                  <p key={idx} className="text-[11px] mb-1.5">• <strong>{t.name}:</strong> {t.significance}</p>
-                ))}
+                <p className="font-bold text-orange-400 mb-1">🏛️ History & Geo-Political:</p>
+                <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].history_geo_political}</p>
               </div>
 
               <div>
-                <p className="font-bold text-amber-400 mb-1">🍲 Famous Local Food & Cuisines:</p>
-                {TOURISM_ECOSYSTEM[activeCityKey].foods.map((f: any, idx: number) => (
-                  <p key={idx} className="text-[11px] mb-1.5">• {f.dish} at <strong>{f.spot}</strong> ({f.price})</p>
-                ))}
+                <p className="font-bold text-amber-400 mb-1">🍲 Picnic Spots & Food:</p>
+                <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].picnic_spots}</p>
+                <p className="text-[11px] mt-1">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].markets_food}</p>
               </div>
 
               <div>
-                <p className="font-bold text-rose-400 mb-1">🛍️ Famous Shopping Markets:</p>
-                {TOURISM_ECOSYSTEM[activeCityKey].markets.map((m: any, idx: number) => (
-                  <p key={idx} className="text-[11px] mb-1.5">• <strong>{m.market}:</strong> {m.specialty} ({m.location})</p>
-                ))}
+                <p className="font-bold text-rose-400 mb-1">📞 Helpline & Culture:</p>
+                <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].culture_helpline}</p>
               </div>
             </div>
 
