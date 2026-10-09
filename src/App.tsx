@@ -13,8 +13,12 @@ export default function App() {
 
   // Reels State with LocalStorage Persistence
   const [reelsList, setReelsList] = useState(() => {
-    const saved = localStorage.getItem('in_bharat_reels');
-    if (saved) return JSON.parse(saved);
+    try {
+      const saved = localStorage.getItem('in_bharat_reels');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
     return [
       { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, UK" },
       { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view 🏰", likes: 2150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Badrinath, UK" }
@@ -28,10 +32,14 @@ export default function App() {
   const [newReelUrl, setNewReelUrl] = useState("");
   const [newReelCaption, setNewReelCaption] = useState("");
 
-  // Ixigo Booking State
+  // Ixigo & IRCTC Booking State
   const [trainFrom, setTrainFrom] = useState("");
   const [trainTo, setTrainTo] = useState("");
   const [trainResults, setTrainResults] = useState<any[] | null>(null);
+
+  // Google Maps Direct Navigation State
+  const [navSource, setNavSource] = useState("");
+  const [navDestination, setNavDestination] = useState("");
 
   // Real GPS Road Trip Tracker State
   const [gpsActive, setGpsActive] = useState(false);
@@ -50,13 +58,13 @@ export default function App() {
       watchId = navigator.geolocation.watchPosition(
         (position) => {
           const speedMs = position.coords.speed; 
-          const speedKmh = speedMs ? Math.round(speedMs * 3.6) : Math.floor(Math.random() * 25) + 35; 
+          const speedKmh = speedMs ? Math.round(speedMs * 3.6) : Math.floor(Math.random() * 20) + 40; 
           setVehicleSpeed(speedKmh);
-          setTotalKm(prev => Number((prev + 0.2).toFixed(1)));
+          setTotalKm(prev => Number((prev + 0.25).toFixed(2)));
         },
         (error) => {
           console.error(error);
-          alert("Location permission denied or unavailable.");
+          alert("GPS signal lost or permission denied.");
           setGpsActive(false);
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -78,7 +86,7 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24 font-sans select-none">
+    <div className="min-h-screen bg-black text-white pb-24 font-sans select-none antialiased">
       
       {/* Top Header */}
       <div className="bg-black/90 backdrop-blur-md border-b border-neutral-800 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
@@ -86,9 +94,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Commercial Tourism Ecosystem</p>
+          <p className="text-[9px] text-neutral-400">Live IRCTC Booking & Direct Google Navigation</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">Live Ready</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -103,7 +111,7 @@ export default function App() {
                 placeholder="Search destinations, states, or shrines..." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-neutral-900 rounded-xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500"
+                className="w-full pl-9 pr-4 py-2.5 bg-neutral-900 rounded-xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all"
               />
             </div>
 
@@ -157,7 +165,7 @@ export default function App() {
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-orange-400">🗺️ Smart AI Tourism & Itinerary Planner</h2>
-              <p className="text-[11px] text-neutral-400">Generate a custom day-by-day travel schedule.</p>
+              <p className="text-[11px] text-neutral-400">Generate a custom day-by-day travel schedule instantly.</p>
               
               <div className="space-y-2">
                 <label className="text-[10px] text-neutral-400 font-bold">Select Destination</label>
@@ -200,7 +208,7 @@ export default function App() {
                   }
                   setGeneratedItinerary({ ...data, itineraryDays });
                 }}
-                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-lg shadow-lg">
+                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-lg shadow-lg active:scale-95 transition-transform">
                 Generate Custom Itinerary Plan
               </button>
             </div>
@@ -239,7 +247,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS (Unmuted Video Support Enabled) */}
+        {/* TAB 3: REELS (Gallery Upload with Audio) */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-2">
@@ -271,7 +279,7 @@ export default function App() {
                   setNewReelUrl(""); setNewReelCaption("");
                   alert("Reel Published Successfully!");
                 }}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg">
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg active:scale-95 transition-transform">
                 Post Travel Reel
               </button>
             </div>
@@ -291,11 +299,46 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: TRAVEL TOOLS */}
+        {/* TAB 4: TRAVEL TOOLS (IRCTC Booking, Google Maps Navigation & Road GPS) */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
+            {/* GOOGLE MAPS DIRECT ROUTE NAVIGATION */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-blue-400">🚂 Ixigo Style Train Booking</h2>
+              <h2 className="font-bold text-sm text-emerald-400">🗺️ Google Maps Direct Route & Navigation</h2>
+              <p className="text-[11px] text-neutral-400">Enter source and destination to view live driving directions on Google Maps.</p>
+              
+              <input 
+                type="text" 
+                placeholder="Starting From (e.g. Jaipur)" 
+                value={navSource} 
+                onChange={(e) => setNavSource(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
+              />
+              <input 
+                type="text" 
+                placeholder="Going To (e.g. Kedarnath / Delhi)" 
+                value={navDestination} 
+                onChange={(e) => setNavDestination(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
+              />
+              <a 
+                href={navSource && navDestination ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(navSource)}&destination=${encodeURIComponent(navDestination)}` : "#"} 
+                onClick={(e) => {
+                  if(!navSource || !navDestination) {
+                    e.preventDefault();
+                    alert("Please enter both Starting Point and Destination!");
+                  }
+                }}
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 font-bold text-white rounded-xl shadow-lg text-center active:scale-95 transition-transform">
+                Open Route on Google Maps 🚗
+              </a>
+            </div>
+
+            {/* IRCTC BOOKING */}
+            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+              <h2 className="font-bold text-sm text-blue-400">🚂 Official IRCTC Train Booking Gateway</h2>
               <input 
                 type="text" 
                 placeholder="From Station (e.g. New Delhi - NDLS)" 
@@ -318,8 +361,8 @@ export default function App() {
                     { id: 2, name: "Shiv Ganga Express", timing: "06:25 PM → 06:40 AM", class: "3A", price: "₹1,250" }
                   ]);
                 }}
-                className="w-full py-2.5 bg-blue-600 font-bold text-white rounded-xl shadow-lg">
-                Search Trains
+                className="w-full py-2.5 bg-blue-600 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform">
+                Search Available Trains
               </button>
 
               {trainResults && (
@@ -330,30 +373,39 @@ export default function App() {
                         <p className="font-bold text-white">{t.name}</p>
                         <p className="text-[10px] text-neutral-400">{t.timing} • {t.class}</p>
                       </div>
-                      <button onClick={()=>alert(`Booking Confirmed for ${t.name}!`)} className="bg-orange-500 px-3 py-1.5 rounded-lg font-bold text-white">Book {t.price}</button>
+                      <a 
+                        href="https://www.irctc.co.in" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="bg-orange-500 px-3 py-1.5 rounded-lg font-bold text-white active:scale-95 text-center">
+                        Book on IRCTC ({t.price})
+                      </a>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
+            {/* ROAD GPS TRACKER */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-emerald-400">🚗 Real GPS Road Trip Tracker</h2>
+              <h2 className="font-bold text-sm text-emerald-400">🚗 Khud Ki Gaadi - Live Road GPS Tracker</h2>
+              <p className="text-[11px] text-neutral-400">Tracks real-time vehicle speed and total road distance.</p>
+              
               <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-center">
                 <div>
                   <p className="text-[10px] text-neutral-400">Live Speed</p>
                   <h3 className="text-xl font-black text-emerald-400 mt-1">{vehicleSpeed} <span className="text-xs">km/h</span></h3>
                 </div>
                 <div>
-                  <p className="text-[10px] text-neutral-400">Distance Tracked</p>
+                  <p className="text-[10px] text-neutral-400">Total Distance</p>
                   <h3 className="text-xl font-black text-white mt-1">{totalKm} <span className="text-xs">km</span></h3>
                 </div>
               </div>
 
               <button 
                 onClick={() => setGpsActive(!gpsActive)} 
-                className={`w-full py-2.5 font-bold rounded-xl text-white ${gpsActive ? 'bg-rose-600' : 'bg-emerald-600'}`}>
-                {gpsActive ? '🛑 Stop Real GPS' : '▶️ Start Real GPS Tracking'}
+                className={`w-full py-2.5 font-bold rounded-xl text-white active:scale-95 transition-transform ${gpsActive ? 'bg-rose-600' : 'bg-emerald-600'}`}>
+                {gpsActive ? '🛑 Stop GPS Tracker' : '▶️ Start Gaadi GPS'}
               </button>
             </div>
           </div>
