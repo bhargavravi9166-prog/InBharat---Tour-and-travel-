@@ -1,0 +1,376 @@
+import React, { useState, useEffect } from 'react';
+import { TOURISM_ECOSYSTEM } from './tourismdata';
+
+export default function App() {
+  const [tab, setTab] = useState<'home' | 'planner' | 'reels' | 'travel' | 'profile'>('home');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
+
+  // AI Trip Planner State
+  const [selectedDest, setSelectedDest] = useState("varanasi");
+  const [tripDuration, setTripDuration] = useState("3 Days");
+  const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
+
+  // Reels Engagement State
+  const [reelsList, setReelsList] = useState([
+    { id: 1, user: "incredible_india", caption: "Ganga Aarti Grand View at Dashashwamedh Ghat ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Varanasi, UP" },
+    { id: 2, user: "rajasthan_tourism", caption: "Sunset reflection at Amer Fort walls 🏰", likes: 2150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, RJ" }
+  ]);
+  const [newReelUrl, setNewReelUrl] = useState("");
+  const [newReelCaption, setNewReelCaption] = useState("");
+
+  // Ixigo Booking State
+  const [trainFrom, setTrainFrom] = useState("");
+  const [trainTo, setTrainTo] = useState("");
+  const [trainResults, setTrainResults] = useState<any[] | null>(null);
+
+  // Live GPS Trip Tracker State
+  const [gpsActive, setGpsActive] = useState(false);
+  const [vehicleSpeed, setVehicleSpeed] = useState(0);
+  const [totalKm, setTotalKm] = useState(0);
+
+  useEffect(() => {
+    let timer: any;
+    if (gpsActive) {
+      timer = setInterval(() => {
+        setVehicleSpeed(Math.floor(Math.random() * (75 - 45 + 1)) + 45);
+        setTotalKm(prev => Number((prev + 0.6).toFixed(1)));
+      }, 2000);
+    } else {
+      setVehicleSpeed(0);
+    }
+    return () => clearInterval(timer);
+  }, [gpsActive]);
+
+  const filteredDestinations = Object.entries(TOURISM_ECOSYSTEM).filter(([_, data]) =>
+    data.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    data.state.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    data.tagline.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-black text-white pb-24 font-sans select-none">
+      
+      {/* Top Header */}
+      <div className="bg-black/90 backdrop-blur-md border-b border-neutral-800 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
+        <div>
+          <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
+            IN BHARAT PRO 🇮🇳
+          </h1>
+          <p className="text-[9px] text-neutral-400">Tourism, Heritage, Food & Markets</p>
+        </div>
+        <span className="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2.5 py-1 rounded-full border border-orange-500/30">Zero Build Live</span>
+      </div>
+
+      <div className="max-w-md mx-auto p-3 space-y-4">
+        
+        {/* TAB 1: HOME (Tourism Directory fetched from tourismdata.ts) */}
+        {tab === 'home' && (
+          <div className="space-y-4">
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400 text-xs">🔍</span>
+              <input 
+                type="text" 
+                placeholder="Search destinations, states, or temples..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-neutral-900 rounded-xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500"
+              />
+            </div>
+
+            <div className="space-y-4">
+              {filteredDestinations.length === 0 ? (
+                <div className="text-center py-16 text-neutral-500 text-xs">No matching destinations found.</div>
+              ) : (
+                filteredDestinations.map(([key, dest]) => (
+                  <div key={key} className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
+                    <div className="relative h-52 bg-neutral-950">
+                      <img src={dest.image} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent"></div>
+                      <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-orange-400 font-bold border border-neutral-800">
+                        ☀️ {dest.weather}
+                      </div>
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <h2 className="text-base font-bold text-white">{dest.name} <span className="text-xs text-orange-400 font-normal">({dest.state})</span></h2>
+                        <p className="text-[10px] text-neutral-300">{dest.tagline}</p>
+                      </div>
+                    </div>
+
+                    <div className="px-3 space-y-3 text-xs">
+                      <p className="text-neutral-300 text-[11px] leading-relaxed">{dest.description}</p>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
+                          <p className="font-bold text-amber-400 mb-1">🍲 Famous Food</p>
+                          <p className="text-[10px] text-neutral-300 truncate">{dest.foods[0].dish}</p>
+                          <span className="text-[9px] text-orange-400 font-semibold">{dest.foods[0].price}</span>
+                        </div>
+                        <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
+                          <p className="font-bold text-rose-400 mb-1">🛍️ Local Market</p>
+                          <p className="text-[10px] text-neutral-300 truncate">{dest.markets[0].market}</p>
+                          <span className="text-[9px] text-neutral-400">{dest.markets[0].location}</span>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => setActiveCityKey(key)} 
+                        className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform">
+                        Explore Full Tourism & Food Guide →
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: AI TRIP PLANNER */}
+        {tab === 'planner' && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+              <h2 className="font-bold text-sm text-orange-400">🗺️ Smart AI Tourism & Itinerary Planner</h2>
+              <p className="text-[11px] text-neutral-400">Generate a custom schedule pulling data directly from our tourism ecosystem.</p>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] text-neutral-400 font-bold">Select Destination</label>
+                <select 
+                  value={selectedDest} 
+                  onChange={(e) => setSelectedDest(e.target.value)}
+                  className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white">
+                  {Object.entries(TOURISM_ECOSYSTEM).map(([k, d]) => (
+                    <option key={k} value={k}>{d.name} ({d.state})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] text-neutral-400 font-bold">Trip Duration</label>
+                <select 
+                  value={tripDuration} 
+                  onChange={(e) => setTripDuration(e.target.value)}
+                  className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white">
+                  <option value="2 Days">2 Days Weekend Tour</option>
+                  <option value="3 Days">3 Days Comprehensive Tour</option>
+                  <option value="5 Days">5 Days Immersive Tour</option>
+                </select>
+              </div>
+
+              <button 
+                onClick={() => {
+                  const data = TOURISM_ECOSYSTEM[selectedDest];
+                  setGeneratedItinerary(data);
+                }}
+                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg">
+                Generate Custom Itinerary Plan
+              </button>
+            </div>
+
+            {generatedItinerary && (
+              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+                <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
+                  <h3 className="font-bold text-amber-400 text-sm">📍 {generatedItinerary.name} ({tripDuration})</h3>
+                  <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold">Ready</span>
+                </div>
+                
+                <div className="space-y-3 text-neutral-300">
+                  <div>
+                    <p className="font-bold text-orange-400 mb-1">🏛️ Day 1: Heritage & Temples</p>
+                    <p className="text-[11px]">• Morning Visit: <strong>{generatedItinerary.temples[0].name}</strong> ({generatedItinerary.temples[0].significance})</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-amber-400 mb-1">🍲 Day 2: Food Exploration</p>
+                    <p className="text-[11px]">• Must-Try: <strong>{generatedItinerary.foods[0].dish}</strong> at {generatedItinerary.foods[0].spot} ({generatedItinerary.foods[0].price})</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-rose-400 mb-1">🛍️ Day 3: Shopping & Markets</p>
+                    <p className="text-[11px]">• Explore: <strong>{generatedItinerary.markets[0].market}</strong> for {generatedItinerary.markets[0].specialty}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: REELS (Retention Support) */}
+        {tab === 'reels' && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-2">
+              <h2 className="font-bold text-orange-400">📹 Upload Travel & Food Reel</h2>
+              <input 
+                type="text" 
+                placeholder="MP4 Video URL..." 
+                value={newReelUrl} 
+                onChange={(e) => setNewReelUrl(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
+              />
+              <input 
+                type="text" 
+                placeholder="Caption & Location (e.g. Varanasi Ghats)..." 
+                value={newReelCaption} 
+                onChange={(e) => setNewReelCaption(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
+              />
+              <button 
+                onClick={() => {
+                  if(!newReelUrl || !newReelCaption) return alert("Enter video link & caption!");
+                  setReelsList([{ id: Date.now(), user: "ravi_bharggav", caption: newReelCaption, likes: 1, video: newReelUrl, location: "In Bharat" }, ...reelsList]);
+                  setNewReelUrl(""); setNewReelCaption("");
+                  alert("Reel Published Successfully!");
+                }}
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg">
+                Post Travel Reel
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {reelsList.map(r => (
+                <div key={r.id} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 shadow-xl flex items-center justify-center">
+                  <video src={r.video} controls autoPlay muted loop playsInline className="w-full h-full object-cover"/>
+                  <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md">@{r.user}</div>
+                  <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl space-y-1">
+                    <p className="text-xs font-semibold text-white">{r.caption}</p>
+                    <p className="text-[10px] text-neutral-300">📍 {r.location}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: TRAVEL TOOLS (Ixigo & Live GPS) */}
+        {tab === 'travel' && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+              <h2 className="font-bold text-sm text-blue-400">🚂 Ixigo Style Train Booking</h2>
+              <input 
+                type="text" 
+                placeholder="From Station (e.g. NDLS)" 
+                value={trainFrom} 
+                onChange={(e) => setTrainFrom(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
+              />
+              <input 
+                type="text" 
+                placeholder="To Station (e.g. BSB / JP)" 
+                value={trainTo} 
+                onChange={(e) => setTrainTo(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
+              />
+              <button 
+                onClick={() => {
+                  if(!trainFrom || !trainTo) return alert("Please enter both stations!");
+                  setTrainResults([
+                    { name: "Vande Bharat Express (22436)", timing: "06:00 AM → 02:00 PM", price: "₹2,100" },
+                    { name: "Shiv Ganga Express (12560)", timing: "06:25 PM → 06:40 AM", price: "₹1,250" }
+                  ]);
+                }}
+                className="w-full py-2.5 bg-blue-600 font-bold text-white rounded-xl shadow-lg">
+                Search Trains
+              </button>
+
+              {trainResults && (
+                <div className="space-y-2 pt-2 border-t border-neutral-800">
+                  {trainResults.map((t, idx) => (
+                    <div key={idx} className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-white">{t.name}</p>
+                        <p className="text-[10px] text-neutral-400">{t.timing}</p>
+                      </div>
+                      <button onClick={()=>alert(`Booking Confirmed for ${t.name}!`)} className="bg-orange-500 px-3 py-1.5 rounded-lg font-bold text-white">Book {t.price}</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+              <h2 className="font-bold text-sm text-emerald-400">🚗 Live Road Trip GPS Tracker</h2>
+              <p className="text-[11px] text-neutral-400">Traveling by road? Track your live vehicle speed and distance covered in real-time.</p>
+              
+              <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-center">
+                <div>
+                  <p className="text-[10px] text-neutral-400">Current Speed</p>
+                  <h3 className="text-xl font-black text-emerald-400 mt-1">{vehicleSpeed} <span className="text-xs">km/h</span></h3>
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-400">Distance Covered</p>
+                  <h3 className="text-xl font-black text-white mt-1">{totalKm} <span className="text-xs">km</span></h3>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setGpsActive(!gpsActive)} 
+                className={`w-full py-2.5 font-bold rounded-xl text-white ${gpsActive ? 'bg-rose-600' : 'bg-emerald-600'}`}>
+                {gpsActive ? '🛑 Stop GPS Tracker' : '▶️ Start Live Trip Tracker'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: PROFILE */}
+        {tab === 'profile' && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 text-center space-y-3">
+              <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 via-orange-500 to-rose-500 mx-auto">
+                <div className="w-full h-full bg-neutral-950 rounded-full flex items-center justify-center text-xl font-black text-white">RB</div>
+              </div>
+              <div>
+                <h2 className="font-bold text-sm text-white">Ravi Bharggav</h2>
+                <p className="text-[11px] text-orange-400">Quality Engineer & Founder</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* DETAILED CITY GUIDE MODAL */}
+      {activeCityKey && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
+              <h3 className="font-bold text-sm text-white">{TOURISM_ECOSYSTEM[activeCityKey].name} Guide</h3>
+              <button onClick={() => setActiveCityKey(null)} className="text-neutral-400 font-bold text-base">✕</button>
+            </div>
+
+            <div className="space-y-3 text-neutral-300">
+              <div>
+                <p className="font-bold text-orange-400 mb-1">🏛️ Heritage & Temples:</p>
+                {TOURISM_ECOSYSTEM[activeCityKey].temples.map((t, idx) => (
+                  <p key={idx} className="text-[11px] mb-1.5">• <strong>{t.name}:</strong> {t.significance}</p>
+                ))}
+              </div>
+
+              <div>
+                <p className="font-bold text-amber-400 mb-1">🍲 Famous Local Food & Cuisines:</p>
+                {TOURISM_ECOSYSTEM[activeCityKey].foods.map((f, idx) => (
+                  <p key={idx} className="text-[11px] mb-1.5">• {f.dish} at <strong>{f.spot}</strong> ({f.price})</p>
+                ))}
+              </div>
+
+              <div>
+                <p className="font-bold text-rose-400 mb-1">🛍️ Famous Shopping Markets:</p>
+                {TOURISM_ECOSYSTEM[activeCityKey].markets.map((m, idx) => (
+                  <p key={idx} className="text-[11px] mb-1.5">• <strong>{m.market}:</strong> {m.specialty} ({m.location})</p>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={() => setActiveCityKey(null)} className="w-full py-2.5 bg-neutral-800 font-bold text-white rounded-xl shadow">Close Guide</button>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-neutral-800 py-3 px-6 flex justify-between items-center z-40 text-xl">
+        <button onClick={() => setTab('home')} className={`${tab === 'home' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>🏠</button>
+        <button onClick={() => setTab('planner')} className={`${tab === 'planner' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>🗺️</button>
+        <button onClick={() => setTab('reels')} className={`${tab === 'reels' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>🎬</button>
+        <button onClick={() => setTab('travel')} className={`${tab === 'travel' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>🚗</button>
+        <button onClick={() => setTab('profile')} className={`${tab === 'profile' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>👤</button>
+      </div>
+
+    </div>
+  );
+}
