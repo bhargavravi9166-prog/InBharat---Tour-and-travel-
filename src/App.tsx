@@ -1,24 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
-// Firebase Configuration Linked
-const firebaseConfig = {
-  apiKey: "AIzaSyB4JsGbrXH6F54I-9_dUUID6xp9wd6kUEYE",
-  authDomain: "inbharat-pro-36432.firebaseapp.com",
-  projectId: "inbharat-pro-36432",
-  storageBucket: "inbharat-pro-36432.firebasestorage.app",
-  messagingSenderId: "309427976197",
-  appId: "1:309427976197:web:243fa69f7125f6e448846c",
-  measurementId: "G-2SCRX5ZGDF"
-};
-
-// Initialize Firebase Services
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
+// Master Pool of Unlimited Permanent Reels (Forts, Monuments, Picnic Spots & Heritage)
+const MASTER_REELS_POOL = [
+  { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, Uttarakhand" },
+  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", likes: 3150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, Rajasthan" },
+  { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", likes: 5420, video: "https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-41631-large.mp4", location: "New Delhi" },
+  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", likes: 1890, video: "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4", location: "Mount Abu, Rajasthan" },
+  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", likes: 4720, video: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4", location: "Raigad, Maharashtra" },
+  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", likes: 3840, video: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1185-large.mp4", location: "Alleppey, Kerala" },
+  { id: 7, user: "agra_taj", caption: "Symbol of Love - The Magnificent Taj Mahal 🤍", likes: 9210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-at-sunset-41558-large.mp4", location: "Agra, Uttar Pradesh" },
+  { id: 8, user: "goa_vibe", caption: "Golden Sunset at Palolem Beach 🌊", likes: 2750, video: "https://assets.mixkit.co/videos/preview/mixkit-sun-setting-over-the-sea-41639-large.mp4", location: "Goa" }
+];
 
 export default function App() {
   const [tab, setTab] = useState<'home' | 'planner' | 'reels' | 'travel' | 'profile'>('home');
@@ -30,37 +23,37 @@ export default function App() {
   const [tripDuration, setTripDuration] = useState("3 Days");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  // Reels State (Cloud Synced)
-  const [reelsList, setReelsList] = useState<any[]>([]);
-  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
-  const [newReelCaption, setNewReelCaption] = useState("");
-  const [uploading, setUploading] = useState(false);
-
-  // Fetch Reels from Firebase Firestore on Load
-  useEffect(() => {
-    const fetchReels = async () => {
-      try {
-        const q = query(collection(db, "reels"), orderBy("id", "desc"));
-        const querySnapshot = await getDocs(q);
-        const cloudReels: any[] = [];
-        querySnapshot.forEach((doc) => {
-          cloudReels.push(doc.data());
-        });
-        if (cloudReels.length > 0) {
-          setReelsList(cloudReels);
-        } else {
-          // Default fallback reels if cloud is empty
-          setReelsList([
-            { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, UK" },
-            { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view 🏰", likes: 2150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Badrinath, UK" }
-          ]);
-        }
-      } catch (error) {
-        console.error("Error fetching reels:", error);
+  // Dynamic Unlimited Reels State with LocalStorage Persistence & Smart Refresh Shuffle
+  const [reelsList, setReelsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('in_bharat_unlimited_reels');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.length > 0) return parsed;
       }
-    };
-    fetchReels();
-  }, []);
+    } catch (e) {
+      console.error(e);
+    }
+    return MASTER_REELS_POOL;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('in_bharat_unlimited_reels', JSON.stringify(reelsList));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [reelsList]);
+
+  // Function to Refresh / Shuffle Reels so users always see fresh rotation
+  const handleRefreshFeed = () => {
+    const shuffled = [...reelsList].sort(() => Math.random() - 0.5);
+    setReelsList(shuffled);
+    alert("✨ Feed refreshed with new sequence of reels!");
+  };
+
+  const [newReelUrl, setNewReelUrl] = useState("");
+  const [newReelCaption, setNewReelCaption] = useState("");
 
   // Ixigo & IRCTC Booking State
   const [trainFrom, setTrainFrom] = useState("");
@@ -112,43 +105,6 @@ export default function App() {
     };
   }, [gpsActive]);
 
-  // Handle Cloud Upload to Firebase Storage & Firestore
-  const handleCloudUpload = async () => {
-    if (!selectedVideoFile || !newReelCaption) {
-      alert("Pehle video select karo aur caption daalo!");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const storageRef = ref(storage, `reels/${Date.now()}_${selectedVideoFile.name}`);
-      const snapshot = await uploadBytes(storageRef, selectedVideoFile);
-      const permanentDownloadUrl = await getDownloadURL(snapshot.ref);
-
-      const newReel = {
-        id: Date.now(),
-        user: "ravi_bharggav",
-        caption: newReelCaption,
-        likes: 1,
-        video: permanentDownloadUrl,
-        location: "In Bharat Cloud"
-      };
-
-      // Save to Firestore Database
-      await addDoc(collection(db, "reels"), newReel);
-
-      setReelsList([newReel, ...reelsList]);
-      setSelectedVideoFile(null);
-      setNewReelCaption("");
-      alert("🎉 Video successfully cloud par upload ho gayi aur sabko dikhegi!");
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Upload failed. Please check internet connection.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const filteredDestinations = Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).filter(([_, data]) =>
     data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     data.City.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -165,9 +121,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Global Cloud Database Connected</p>
+          <p className="text-[9px] text-neutral-400">Unlimited Forts & Refreshable Reels Feed</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Global Live</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -318,33 +274,46 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS (Cloud Storage & Firestore Global Feed) */}
+        {/* TAB 3: REELS (Unlimited Forts & Refreshable Feed) */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
-            <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-2">
-              <h2 className="font-bold text-orange-400">📹 Upload Video to Global Cloud Feed</h2>
-              <input 
-                type="text" 
-                placeholder="Caption & Location (e.g. Jaipur Fort)..." 
-                value={newReelCaption} 
-                onChange={(e) => setNewReelCaption(e.target.value)}
-                className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
-              />
-              <input 
-                type="file" 
-                accept="video/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) setSelectedVideoFile(file);
-                }}
-                className="w-full p-2 bg-neutral-950 rounded-lg border border-neutral-800 text-white text-[11px] file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white"
-              />
-              <button 
-                onClick={handleCloudUpload}
-                disabled={uploading}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg active:scale-95 transition-transform disabled:opacity-50">
-                {uploading ? '⏳ Uploading to Cloud...' : '☁️ Publish to Global Cloud'}
-              </button>
+            <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-3">
+              <div className="flex justify-between items-center">
+                <h2 className="font-bold text-orange-400">🎬 Unlimited Forts & Picnic Reels</h2>
+                <button 
+                  onClick={handleRefreshFeed}
+                  className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg text-[10px] font-bold active:scale-95 transition-transform">
+                  🔄 Refresh Feed
+                </button>
+              </div>
+
+              <div className="space-y-2 pt-1 border-t border-neutral-800">
+                <input 
+                  type="text" 
+                  placeholder="Paste MP4 Video URL (Forts, Monuments)..." 
+                  value={newReelUrl} 
+                  onChange={(e) => setNewReelUrl(e.target.value)}
+                  className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
+                />
+                <input 
+                  type="text" 
+                  placeholder="Spot Name & Location (e.g. Mehrangarh Fort, Jodhpur)..." 
+                  value={newReelCaption} 
+                  onChange={(e) => setNewReelCaption(e.target.value)}
+                  className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
+                />
+                <button 
+                  onClick={() => {
+                    if(!newReelUrl || !newReelCaption) return alert("Please enter both Video URL and Location/Caption!");
+                    const updatedReels = [{ id: Date.now(), user: "ravi_bharggav", caption: newReelCaption, likes: 1, video: newReelUrl, location: "In Bharat Pro" }, ...reelsList];
+                    setReelsList(updatedReels);
+                    setNewReelUrl(""); setNewReelCaption("");
+                    alert("New Reel added permanently to the feed!");
+                  }}
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg active:scale-95 transition-transform">
+                  Publish New Reel
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
