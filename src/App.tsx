@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
-// Master Pool of Unlimited Permanent Reels (Forts, Monuments, Picnic Spots & Heritage)
+// Firebase Configuration Linked
+const firebaseConfig = {
+  apiKey: "AIzaSyB4JsGbrXH6F54I-9_dUUID6xp9wd6kUEYE",
+  authDomain: "inbharat-pro-36432.firebaseapp.com",
+  projectId: "inbharat-pro-36432",
+  storageBucket: "inbharat-pro-36432.firebasestorage.app",
+  messagingSenderId: "309427976197",
+  appId: "1:309427976197:web:243fa69f7125f6e448846c",
+  measurementId: "G-2SCRX5ZGDF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const MASTER_REELS_POOL = [
-  { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, Uttarakhand" },
-  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", likes: 3150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, Rajasthan" },
-  { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", likes: 5420, video: "https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-41631-large.mp4", location: "New Delhi" },
-  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", likes: 1890, video: "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4", location: "Mount Abu, Rajasthan" },
-  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", likes: 4720, video: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4", location: "Raigad, Maharashtra" },
-  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", likes: 3840, video: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1185-large.mp4", location: "Alleppey, Kerala" },
-  { id: 7, user: "agra_taj", caption: "Symbol of Love - The Magnificent Taj Mahal 🤍", likes: 9210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-at-sunset-41558-large.mp4", location: "Agra, Uttar Pradesh" },
-  { id: 8, user: "goa_vibe", caption: "Golden Sunset at Palolem Beach 🌊", likes: 2750, video: "https://assets.mixkit.co/videos/preview/mixkit-sun-setting-over-the-sea-41639-large.mp4", location: "Goa" }
+  { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, Uttarakhand" },
+  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, Rajasthan" }
 ];
 
 export default function App() {
@@ -18,57 +27,57 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
-  // AI Trip Planner State
   const [selectedDest, setSelectedDest] = useState("kedarnath");
-  const [tripDuration, setTripDuration] = useState("3 Days");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  // Dynamic Unlimited Reels State with LocalStorage Persistence & Smart Refresh Shuffle
-  const [reelsList, setReelsList] = useState(() => {
-    try {
-      const saved = localStorage.getItem('in_bharat_unlimited_reels');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    return MASTER_REELS_POOL;
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('in_bharat_unlimited_reels', JSON.stringify(reelsList));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [reelsList]);
-
-  // Function to Refresh / Shuffle Reels so users always see fresh rotation
-  const handleRefreshFeed = () => {
-    const shuffled = [...reelsList].sort(() => Math.random() - 0.5);
-    setReelsList(shuffled);
-    alert("✨ Feed refreshed with new sequence of reels!");
-  };
-
+  const [reelsList, setReelsList] = useState<any[]>(MASTER_REELS_POOL);
   const [newReelUrl, setNewReelUrl] = useState("");
   const [newReelCaption, setNewReelCaption] = useState("");
 
-  // Ixigo & IRCTC Booking State
+  // Fetch from Firebase Firestore on load
+  useEffect(() => {
+    const fetchCloudReels = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "reels"));
+        const cloudReels: any[] = [];
+        querySnapshot.forEach((doc) => {
+          cloudReels.push(doc.data());
+        });
+        if (cloudReels.length > 0) {
+          setReelsList([...cloudReels, ...MASTER_REELS_POOL]);
+        }
+      } catch (e) {
+        console.error("Cloud fetch error:", e);
+      }
+    };
+    fetchCloudReels();
+  }, []);
+
+  const handleCloudPublish = async () => {
+    if (!newReelUrl || !newReelCaption) return alert("Please enter both URL and Caption!");
+    try {
+      const newReel = { id: Date.now(), user: "ravi_bharggav", caption: newReelCaption, video: newReelUrl, location: "In Bharat Pro" };
+      await addDoc(collection(db, "reels"), newReel);
+      setReelsList([newReel, ...reelsList]);
+      setNewReelUrl("");
+      setNewReelCaption("");
+      alert("🎉 Successfully published to Firebase Cloud!");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to upload to cloud.");
+    }
+  };
+
   const [trainFrom, setTrainFrom] = useState("");
   const [trainTo, setTrainTo] = useState("");
   const [trainResults, setTrainResults] = useState<any[] | null>(null);
 
-  // Hotel Booking State
   const [hotelCity, setHotelCity] = useState("");
   const [hotelResults, setHotelResults] = useState<any[] | null>(null);
 
-  // Google Maps Direct Navigation State
   const [navSource, setNavSource] = useState("");
   const [navDestination, setNavDestination] = useState("");
 
-  // Real GPS Road Trip Tracker State
   const [gpsActive, setGpsActive] = useState(false);
   const [vehicleSpeed, setVehicleSpeed] = useState(0);
   const [totalKm, setTotalKm] = useState(0);
@@ -77,21 +86,19 @@ export default function App() {
     let watchId: number;
     if (gpsActive) {
       if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser");
+        alert("Geolocation not supported");
         setGpsActive(false);
         return;
       }
-
       watchId = navigator.geolocation.watchPosition(
         (position) => {
-          const speedMs = position.coords.speed; 
-          const speedKmh = speedMs ? Math.round(speedMs * 3.6) : Math.floor(Math.random() * 20) + 40; 
+          const speedMs = position.coords.speed;
+          const speedKmh = speedMs ? Math.round(speedMs * 3.6) : Math.floor(Math.random() * 20) + 40;
           setVehicleSpeed(speedKmh);
           setTotalKm(prev => Number((prev + 0.25).toFixed(2)));
         },
-        (error) => {
-          console.error(error);
-          alert("GPS signal lost or permission denied.");
+        () => {
+          alert("GPS signal lost.");
           setGpsActive(false);
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -99,7 +106,6 @@ export default function App() {
     } else {
       setVehicleSpeed(0);
     }
-
     return () => {
       if (watchId) navigator.geolocation.clearWatch(watchId);
     };
@@ -108,8 +114,7 @@ export default function App() {
   const filteredDestinations = Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).filter(([_, data]) =>
     data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     data.City.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    data.State.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    data.Type.toLowerCase().includes(searchQuery.toLowerCase())
+    data.State.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -121,9 +126,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Unlimited Forts & Refreshable Reels Feed</p>
+          <p className="text-[9px] text-neutral-400">Tourism Data & Cloud Connected</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Live</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -135,7 +140,7 @@ export default function App() {
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400 text-xs">🔍</span>
               <input 
                 type="text" 
-                placeholder="Search destinations, states, or shrines..." 
+                placeholder="Search destinations..." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 bg-neutral-900 rounded-xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all"
@@ -143,46 +148,19 @@ export default function App() {
             </div>
 
             <div className="space-y-4">
-              {filteredDestinations.length === 0 ? (
-                <div className="text-center py-16 text-neutral-500 text-xs">No matching destinations found.</div>
-              ) : (
-                filteredDestinations.map(([key, dest]) => (
-                  <div key={key} className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
-                    <div className="relative h-52 bg-neutral-950">
-                      <img src={dest.image_url} alt="" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent"></div>
-                      <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-orange-400 font-bold border border-neutral-800">
-                        ☀️ {dest.weather}
-                      </div>
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
-                        <p className="text-[10px] text-neutral-300">Type: {dest.Type}</p>
-                      </div>
-                    </div>
-
-                    <div className="px-3 space-y-3 text-xs">
-                      <p className="text-neutral-300 text-[11px] leading-relaxed">{dest.history_geo_political}</p>
-                      
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
-                          <p className="font-bold text-amber-400 mb-1">🍲 Local Food</p>
-                          <p className="text-[10px] text-neutral-300 truncate">{dest.markets_food}</p>
-                        </div>
-                        <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
-                          <p className="font-bold text-rose-400 mb-1">💰 Budget Info</p>
-                          <p className="text-[10px] text-neutral-300 truncate">{dest.budget}</p>
-                        </div>
-                      </div>
-
-                      <button 
-                        onClick={() => setActiveCityKey(key)} 
-                        className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform">
-                        Explore Full Tourism & Food Guide →
-                      </button>
-                    </div>
+              {filteredDestinations.map(([key, dest]) => (
+                <div key={key} className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
+                  <div className="p-3 space-y-3 text-xs">
+                    <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
+                    <p className="text-neutral-300 text-[11px] leading-relaxed">{dest.history_geo_political}</p>
+                    <button 
+                      onClick={() => setActiveCityKey(key)} 
+                      className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform">
+                      Explore Full Guide →
+                    </button>
                   </div>
-                ))
-              )}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -191,137 +169,46 @@ export default function App() {
         {tab === 'planner' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-orange-400">🗺️ Smart AI Tourism & Itinerary Planner</h2>
-              <p className="text-[11px] text-neutral-400">Generate a custom day-by-day travel schedule instantly.</p>
-              
-              <div className="space-y-2">
-                <label className="text-[10px] text-neutral-400 font-bold">Select Destination</label>
-                <select 
-                  value={selectedDest} 
-                  onChange={(e) => setSelectedDest(e.target.value)}
-                  className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white">
-                  {Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).map(([k, d]) => (
-                    <option key={k} value={k}>{d.Name} ({d.State})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] text-neutral-400 font-bold">Trip Duration</label>
-                <select 
-                  value={tripDuration} 
-                  onChange={(e) => setTripDuration(e.target.value)}
-                  className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white">
-                  <option value="2 Days">2 Days Weekend Tour</option>
-                  <option value="3 Days">3 Days Comprehensive Tour</option>
-                  <option value="5 Days">5 Days Immersive Tour</option>
-                </select>
-              </div>
-
+              <h2 className="font-bold text-sm text-orange-400">🗺️ Smart AI Itinerary Planner</h2>
+              <select 
+                value={selectedDest} 
+                onChange={(e) => setSelectedDest(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white">
+                {Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).map(([k, d]) => (
+                  <option key={k} value={k}>{d.Name} ({d.State})</option>
+                ))}
+              </select>
               <button 
-                onClick={() => {
-                  const data = MASTER_INDIA_TOURISM_DIRECTORY[selectedDest];
-                  const daysCount = parseInt(tripDuration) || 3;
-                  const itineraryDays = [];
-                  for (let i = 1; i <= daysCount; i++) {
-                    itineraryDays.push({
-                      day: i,
-                      title: i === 1 ? "Arrival, Darshan & Heritage" : i === 2 ? "Local Food Trails & Markets" : "Scenic Exploration & Culture",
-                      morning: i === 1 ? `Arrive at ${data.City}. Check into hotel.` : `Morning sightseeing around ${data.Name}.`,
-                      afternoon: `Explore local attractions & picnic spot: ${data.picnic_spots.split('\n')[0]}`,
-                      evening: `Enjoy local cuisine & markets: ${data.markets_food.split(',')[0]}`,
-                      budgetTip: data.budget
-                    });
-                  }
-                  setGeneratedItinerary({ ...data, itineraryDays });
-                }}
-                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-lg shadow-lg active:scale-95 transition-transform">
-                Generate Custom Itinerary Plan
+                onClick={() => setGeneratedItinerary(MASTER_INDIA_TOURISM_DIRECTORY[selectedDest])}
+                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-lg shadow-lg">
+                Generate Plan
               </button>
             </div>
-
             {generatedItinerary && (
-              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-4">
-                <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-                  <div>
-                    <h3 className="font-bold text-amber-400 text-sm">📍 {generatedItinerary.Name}</h3>
-                    <p className="text-[10px] text-neutral-400">{generatedItinerary.State} • {tripDuration}</p>
-                  </div>
-                  <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold">AI Generated</span>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="bg-neutral-950 p-3 rounded-xl border border-neutral-800 space-y-1">
-                    <p className="font-bold text-orange-400">🚗 Transport Roadmap:</p>
-                    <p className="text-[11px] text-neutral-300">{generatedItinerary.transport_roadmap}</p>
-                  </div>
-
-                  <div className="space-y-3 pt-2">
-                    <h4 className="font-bold text-white text-xs">🗓️ Day-by-Day Schedule:</h4>
-                    {generatedItinerary.itineraryDays?.map((d: any) => (
-                      <div key={d.day} className="bg-neutral-950 p-3 rounded-xl border border-neutral-800 space-y-2">
-                        <div className="font-bold text-amber-400 border-b border-neutral-900 pb-1">Day {d.day}: {d.title}</div>
-                        <p className="text-[11px] text-neutral-300">🌅 <strong>Morning:</strong> {d.morning}</p>
-                        <p className="text-[11px] text-neutral-300">☀️ <strong>Afternoon:</strong> {d.afternoon}</p>
-                        <p className="text-[11px] text-neutral-300">🌙 <strong>Evening:</strong> {d.evening}</p>
-                        <p className="text-[10px] text-orange-400 pt-1">💰 {d.budgetTip}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-2 text-xs">
+                <h3 className="font-bold text-amber-400">{generatedItinerary.Name}</h3>
+                <p className="text-neutral-300">{generatedItinerary.history_geo_political}</p>
               </div>
             )}
           </div>
         )}
 
-        {/* TAB 3: REELS (Unlimited Forts & Refreshable Feed) */}
+        {/* TAB 3: REELS */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-3">
-              <div className="flex justify-between items-center">
-                <h2 className="font-bold text-orange-400">🎬 Unlimited Forts & Picnic Reels</h2>
-                <button 
-                  onClick={handleRefreshFeed}
-                  className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg text-[10px] font-bold active:scale-95 transition-transform">
-                  🔄 Refresh Feed
-                </button>
-              </div>
-
-              <div className="space-y-2 pt-1 border-t border-neutral-800">
-                <input 
-                  type="text" 
-                  placeholder="Paste MP4 Video URL (Forts, Monuments)..." 
-                  value={newReelUrl} 
-                  onChange={(e) => setNewReelUrl(e.target.value)}
-                  className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
-                />
-                <input 
-                  type="text" 
-                  placeholder="Spot Name & Location (e.g. Mehrangarh Fort, Jodhpur)..." 
-                  value={newReelCaption} 
-                  onChange={(e) => setNewReelCaption(e.target.value)}
-                  className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
-                />
-                <button 
-                  onClick={() => {
-                    if(!newReelUrl || !newReelCaption) return alert("Please enter both Video URL and Location/Caption!");
-                    const updatedReels = [{ id: Date.now(), user: "ravi_bharggav", caption: newReelCaption, likes: 1, video: newReelUrl, location: "In Bharat Pro" }, ...reelsList];
-                    setReelsList(updatedReels);
-                    setNewReelUrl(""); setNewReelCaption("");
-                    alert("New Reel added permanently to the feed!");
-                  }}
-                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg active:scale-95 transition-transform">
-                  Publish New Reel
-                </button>
-              </div>
+              <h2 className="font-bold text-orange-400">🎬 Upload to Cloud Database</h2>
+              <input type="text" placeholder="Video URL..." value={newReelUrl} onChange={(e) => setNewReelUrl(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
+              <input type="text" placeholder="Location..." value={newReelCaption} onChange={(e) => setNewReelCaption(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
+              <button onClick={handleCloudPublish} className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg">Publish to Cloud</button>
             </div>
 
             <div className="space-y-4">
-              {reelsList.map((r: any) => (
-                <div key={r.id} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 shadow-xl flex items-center justify-center">
+              {reelsList.map((r: any, idx: number) => (
+                <div key={idx} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center">
                   <video src={r.video} controls playsInline preload="metadata" className="w-full h-full object-cover"/>
-                  <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md">@{r.user}</div>
-                  <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl space-y-1">
+                  <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white">@{r.user}</div>
+                  <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl">
                     <p className="text-xs font-semibold text-white">{r.caption}</p>
                     <p className="text-[10px] text-neutral-300">📍 {r.location}</p>
                   </div>
@@ -334,150 +221,40 @@ export default function App() {
         {/* TAB 4: TRAVEL TOOLS */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
-            
-            {/* HOTEL & STAY BOOKING */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-amber-400">🏨 Hotel & Stay Booking Gateway</h2>
-              <input 
-                type="text" 
-                placeholder="Enter City or Destination (e.g. Jaipur / Mount Abu)" 
-                value={hotelCity} 
-                onChange={(e) => setHotelCity(e.target.value)}
-                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
-              />
-              <button 
-                onClick={() => {
-                  if(!hotelCity) return alert("Please enter a city or destination!");
-                  setHotelResults([
-                    { id: 1, name: "Luxury Heritage Palace & Resort", rating: "⭐️ 4.8", price: "₹3,499 / night" },
-                    { id: 2, name: "Comfort Inn & Budget Suites", rating: "⭐️ 4.2", price: "₹1,850 / night" }
-                  ]);
-                }}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform">
-                Search Available Hotels
-              </button>
-
-              {hotelResults && (
-                <div className="space-y-2 pt-2 border-t border-neutral-800">
-                  {hotelResults.map((h) => (
-                    <div key={h.id} className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 flex justify-between items-center">
-                      <div>
-                        <p className="font-bold text-white">{h.name}</p>
-                        <p className="text-[10px] text-neutral-400">{h.rating} • {h.price}</p>
-                      </div>
-                      <a 
-                        href="https://www.makemytrip.com/hotels/" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="bg-emerald-600 px-3 py-1.5 rounded-lg font-bold text-white active:scale-95 text-center">
-                        Book Stay
-                      </a>
-                    </div>
-                  ))}
+              <h2 className="font-bold text-sm text-amber-400">🏨 Hotel Booking</h2>
+              <input type="text" placeholder="Enter City" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
+              <button onClick={() => setHotelResults([{ id: 1, name: "Heritage Palace", price: "₹3,499 / night" }])} className="w-full py-2.5 bg-orange-500 font-bold text-white rounded-xl">Search Hotels</button>
+              {hotelResults && hotelResults.map(h => (
+                <div key={h.id} className="bg-neutral-950 p-2 rounded-xl flex justify-between items-center">
+                  <span>{h.name} - {h.price}</span>
+                  <a href="https://www.makemytrip.com/hotels/" target="_blank" rel="noopener noreferrer" className="bg-emerald-600 px-3 py-1 rounded font-bold">Book</a>
                 </div>
-              )}
+              ))}
             </div>
 
-            {/* GOOGLE MAPS NAVIGATION */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-emerald-400">🗺️ Google Maps Direct Route & Navigation</h2>
-              <input 
-                type="text" 
-                placeholder="Starting From (e.g. Jaipur)" 
-                value={navSource} 
-                onChange={(e) => setNavSource(e.target.value)}
-                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
-              />
-              <input 
-                type="text" 
-                placeholder="Going To (e.g. Kedarnath / Delhi)" 
-                value={navDestination} 
-                onChange={(e) => setNavDestination(e.target.value)}
-                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
-              />
-              <a 
-                href={navSource && navDestination ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(navSource)}&destination=${encodeURIComponent(navDestination)}` : "#"} 
-                onClick={(e) => {
-                  if(!navSource || !navDestination) {
-                    e.preventDefault();
-                    alert("Please enter both Starting Point and Destination!");
-                  }
-                }}
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="block w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 font-bold text-white rounded-xl shadow-lg text-center active:scale-95 transition-transform">
-                Open Route on Google Maps 🚗
-              </a>
+              <h2 className="font-bold text-sm text-emerald-400">🗺️ Google Maps Navigation</h2>
+              <input type="text" placeholder="From" value={navSource} onChange={(e) => setNavSource(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
+              <input type="text" placeholder="To" value={navDestination} onChange={(e) => setNavDestination(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
+              <a href={navSource && navDestination ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(navSource)}&destination=${encodeURIComponent(navDestination)}` : "#"} target="_blank" rel="noopener noreferrer" className="block w-full py-2.5 bg-emerald-600 font-bold text-white rounded-xl text-center">Open Maps 🚗</a>
             </div>
 
-            {/* IRCTC BOOKING */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-blue-400">🚂 Official IRCTC Train Booking Gateway</h2>
-              <input 
-                type="text" 
-                placeholder="From Station (e.g. NDLS)" 
-                value={trainFrom} 
-                onChange={(e) => setTrainFrom(e.target.value)}
-                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
-              />
-              <input 
-                type="text" 
-                placeholder="To Station (e.g. Varanasi - BSB)" 
-                value={trainTo} 
-                onChange={(e) => setTrainTo(e.target.value)}
-                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
-              />
-              <button 
-                onClick={() => {
-                  if(!trainFrom || !trainTo) return alert("Please enter both stations!");
-                  setTrainResults([
-                    { id: 1, name: "Vande Bharat Express", timing: "06:00 AM → 02:00 PM", class: "CC", price: "₹2,100" },
-                    { id: 2, name: "Shiv Ganga Express", timing: "06:25 PM → 06:40 AM", class: "3A", price: "₹1,250" }
-                  ]);
-                }}
-                className="w-full py-2.5 bg-blue-600 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform">
-                Search Available Trains
-              </button>
-
-              {trainResults && (
-                <div className="space-y-2 pt-2 border-t border-neutral-800">
-                  {trainResults.map((t) => (
-                    <div key={t.id} className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 flex justify-between items-center">
-                      <div>
-                        <p className="font-bold text-white">{t.name}</p>
-                        <p className="text-[10px] text-neutral-400">{t.timing} • {t.class}</p>
-                      </div>
-                      <a 
-                        href="https://www.irctc.co.in" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="bg-orange-500 px-3 py-1.5 rounded-lg font-bold text-white active:scale-95 text-center">
-                        Book on IRCTC ({t.price})
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <h2 className="font-bold text-sm text-blue-400">🚂 IRCTC Train Booking</h2>
+              <input type="text" placeholder="From Station" value={trainFrom} onChange={(e) => setTrainFrom(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
+              <input type="text" placeholder="To Station" value={trainTo} onChange={(e) => setTrainTo(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
+              <a href="https://www.irctc.co.in" target="_blank" rel="noopener noreferrer" className="block text-center bg-orange-500 py-2.5 rounded-xl font-bold text-white">Book on IRCTC</a>
             </div>
 
-            {/* ROAD GPS TRACKER */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-emerald-400">🚗 Khud Ki Gaadi - Live Road GPS Tracker</h2>
-              <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-center">
-                <div>
-                  <p className="text-[10px] text-neutral-400">Live Speed</p>
-                  <h3 className="text-xl font-black text-emerald-400 mt-1">{vehicleSpeed} <span className="text-xs">km/h</span></h3>
-                </div>
-                <div>
-                  <p className="text-[10px] text-neutral-400">Total Distance</p>
-                  <h3 className="text-xl font-black text-white mt-1">{totalKm} <span className="text-xs">km</span></h3>
-                </div>
+              <h2 className="font-bold text-sm text-emerald-400">🚗 Live GPS Tracker</h2>
+              <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl text-center">
+                <div><p className="text-[10px]">Speed</p><h3 className="text-xl font-black text-emerald-400">{vehicleSpeed} km/h</h3></div>
+                <div><p className="text-[10px]">Distance</p><h3 className="text-xl font-black text-white">{totalKm} km</h3></div>
               </div>
-
-              <button 
-                onClick={() => setGpsActive(!gpsActive)} 
-                className={`w-full py-2.5 font-bold rounded-xl text-white active:scale-95 transition-transform ${gpsActive ? 'bg-rose-600' : 'bg-emerald-600'}`}>
-                {gpsActive ? '🛑 Stop GPS Tracker' : '▶️ Start Gaadi GPS'}
+              <button onClick={() => setGpsActive(!gpsActive)} className={`w-full py-2.5 font-bold rounded-xl text-white ${gpsActive ? 'bg-rose-600' : 'bg-emerald-600'}`}>
+                {gpsActive ? '🛑 Stop GPS' : '▶️ Start GPS'}
               </button>
             </div>
           </div>
@@ -487,56 +264,32 @@ export default function App() {
         {tab === 'profile' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 text-center space-y-3">
-              <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 via-orange-500 to-rose-500 mx-auto">
-                <div className="w-full h-full bg-neutral-950 rounded-full flex items-center justify-center text-xl font-black text-white">RB</div>
-              </div>
-              <div>
-                <h2 className="font-bold text-sm text-white">Ravi Bharggav</h2>
-                <p className="text-[11px] text-orange-400">Founder & Managing Director</p>
-              </div>
+              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 mx-auto flex items-center justify-center text-xl font-black text-white">RB</div>
+              <h2 className="font-bold text-sm text-white">Ravi Bharggav</h2>
+              <p className="text-[11px] text-orange-400">Founder & Managing Director</p>
             </div>
           </div>
         )}
 
       </div>
 
-      {/* DETAILED CITY GUIDE MODAL */}
       {activeCityKey && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-              <h3 className="font-bold text-sm text-white">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].Name} Guide</h3>
-              <button onClick={() => setActiveCityKey(null)} className="text-neutral-400 font-bold text-base">✕</button>
-            </div>
-
-            <div className="space-y-3 text-neutral-300">
-              <div>
-                <p className="font-bold text-orange-400 mb-1">🏛️ History & Geo-Political:</p>
-                <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].history_geo_political}</p>
-              </div>
-              <div>
-                <p className="font-bold text-amber-400 mb-1">🍲 Picnic Spots & Food:</p>
-                <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].picnic_spots}</p>
-                <p className="text-[11px] mt-1">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].markets_food}</p>
-              </div>
-              <div>
-                <p className="font-bold text-rose-400 mb-1">📞 Helpline & Culture:</p>
-                <p className="text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey].culture_helpline}</p>
-              </div>
-            </div>
-
-            <button onClick={() => setActiveCityKey(null)} className="w-full py-2.5 bg-neutral-800 font-bold text-white rounded-xl shadow">Close Guide</button>
+          <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl p-4 space-y-3 text-xs">
+            <h3 className="font-bold text-sm text-white">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.Name}</h3>
+            <p className="text-neutral-300">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.history_geo_political}</p>
+            <button onClick={() => setActiveCityKey(null)} className="w-full py-2.5 bg-neutral-800 font-bold text-white rounded-xl">Close</button>
           </div>
         </div>
       )}
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-neutral-800 py-3 px-6 flex justify-between items-center z-40 text-xl">
-        <button onClick={() => setTab('home')} className={`${tab === 'home' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>🏠</button>
-        <button onClick={() => setTab('planner')} className={`${tab === 'planner' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>🗺️</button>
-        <button onClick={() => setTab('reels')} className={`${tab === 'reels' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>🎬</button>
-        <button onClick={() => setTab('travel')} className={`${tab === 'travel' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>🚗</button>
-        <button onClick={() => setTab('profile')} className={`${tab === 'profile' ? 'text-white scale-110' : 'text-neutral-500'} transition-all`}>👤</button>
+        <button onClick={() => setTab('home')} className={`${tab === 'home' ? 'text-white scale-110' : 'text-neutral-500'}`}>🏠</button>
+        <button onClick={() => setTab('planner')} className={`${tab === 'planner' ? 'text-white scale-110' : 'text-neutral-500'}`}>🗺️</button>
+        <button onClick={() => setTab('reels')} className={`${tab === 'reels' ? 'text-white scale-110' : 'text-neutral-500'}`}>🎬</button>
+        <button onClick={() => setTab('travel')} className={`${tab === 'travel' ? 'text-white scale-110' : 'text-neutral-500'}`}>🚗</button>
+        <button onClick={() => setTab('profile')} className={`${tab === 'profile' ? 'text-white scale-110' : 'text-neutral-500'}`}>👤</button>
       </div>
 
     </div>
