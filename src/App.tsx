@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
-// Master Pool of Unlimited Global Forts, Monuments & Picnic Spot Reels (Cloud CDN Links)
-const MASTER_GLOBAL_REELS_POOL = [
+// Firebase Configuration Linked
+const firebaseConfig = {
+  apiKey: "AIzaSyB4JsGbrXH6F54I-9_dUUID6xp9wd6kUEYE",
+  authDomain: "inbharat-pro-36432.firebaseapp.com",
+  projectId: "inbharat-pro-36432",
+  storageBucket: "inbharat-pro-36432.firebasestorage.app",
+  messagingSenderId: "309427976197",
+  appId: "1:309427976197:web:243fa69f7125f6e448846c",
+  measurementId: "G-2SCRX5ZGDF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Pre-loaded Unlimited Global Forts & Picnic Spot Reels for All Users
+const PRELOADED_GLOBAL_REELS = [
   { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, Uttarakhand" },
   { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, Rajasthan" },
   { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", video: "https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-41631-large.mp4", location: "New Delhi" },
-  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4", location: "Mount Abu, Rajasthan" },
-  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", video: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4", location: "Raigad, Maharashtra" },
-  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", video: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1185-large.mp4", location: "Alleppey, Kerala" },
-  { id: 7, user: "agra_taj", caption: "Symbol of Love - The Magnificent Taj Mahal 🤍", video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-at-sunset-41558-large.mp4", location: "Agra, Uttar Pradesh" },
-  { id: 8, user: "goa_vibe", caption: "Golden Sunset at Palolem Beach 🌊", video: "https://assets.mixkit.co/videos/preview/mixkit-sun-setting-over-the-sea-41639-large.mp4", location: "Goa" }
+  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4", location: "Mount Abu, Rajasthan" }
 ];
 
 export default function App() {
@@ -21,14 +33,57 @@ export default function App() {
   const [selectedDest, setSelectedDest] = useState("kedarnath");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  // Unlimited Global Reels with Smart Auto-Shuffle on Every Load/Refresh
-  const [reelsList, setReelsList] = useState(() => {
-    return [...MASTER_GLOBAL_REELS_POOL].sort(() => Math.random() - 0.5);
-  });
+  const [reelsList, setReelsList] = useState<any[]>(PRELOADED_GLOBAL_REELS);
+  const [newReelUrl, setNewReelUrl] = useState("");
+  const [newReelCaption, setNewReelCaption] = useState("");
+  const [uploading, setUploading] = useState(false);
 
-  const handleRefreshFeed = () => {
-    const shuffled = [...MASTER_GLOBAL_REELS_POOL].sort(() => Math.random() - 0.5);
-    setReelsList(shuffled);
+  // Fetch Global Cloud Reels from Firebase & Merge with Pre-loaded Pool
+  useEffect(() => {
+    const fetchGlobalCloudReels = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "reels"));
+        const cloudReels: any[] = [];
+        querySnapshot.forEach((doc) => {
+          cloudReels.push(doc.data());
+        });
+        if (cloudReels.length > 0) {
+          setReelsList([...cloudReels, ...PRELOADED_GLOBAL_REELS]);
+        }
+      } catch (e) {
+        console.error("Cloud sync error, keeping pre-loaded reels:", e);
+      }
+    };
+    fetchGlobalCloudReels();
+  }, []);
+
+  const handleGlobalPublish = async () => {
+    if (!newReelUrl || !newReelCaption) {
+      alert("Please enter both Video URL and Caption/Location!");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const newReel = { 
+        id: Date.now(), 
+        user: "ravi_bharggav", 
+        caption: newReelCaption, 
+        video: newReelUrl, 
+        location: "In Bharat Pro Global" 
+      };
+
+      await addDoc(collection(db, "reels"), newReel);
+      setReelsList([newReel, ...reelsList]);
+      setNewReelUrl("");
+      setNewReelCaption("");
+      alert("🎉 Reel successfully published to Global Cloud for all users!");
+    } catch (e) {
+      console.error("Publish error:", e);
+      alert("Failed to publish. Check connection.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const [trainFrom, setTrainFrom] = useState("");
@@ -89,9 +144,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Unlimited Global Forts & Tourism Feed</p>
+          <p className="text-[9px] text-neutral-400">Firebase Global Cloud Connected</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Global Live</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -156,27 +211,27 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS (Clean Global Feed with Refresh Button) */}
+        {/* TAB 3: REELS */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
-            <div className="flex justify-between items-center bg-neutral-900 p-3 rounded-xl border border-neutral-800">
-              <div>
-                <h2 className="font-bold text-orange-400 text-sm">🎬 Global Forts & Picnic Reels</h2>
-                <p className="text-[10px] text-neutral-400">Unlimited pre-loaded server feed</p>
-              </div>
+            <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-3">
+              <h2 className="font-bold text-orange-400">🎬 Publish to Global Cloud Feed</h2>
+              <input type="text" placeholder="Video MP4 URL..." value={newReelUrl} onChange={(e) => setNewReelUrl(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
+              <input type="text" placeholder="Spot Name & Location..." value={newReelCaption} onChange={(e) => setNewReelCaption(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"/>
               <button 
-                onClick={handleRefreshFeed}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs active:scale-95 transition-transform shadow">
-                🔄 Refresh Feed
+                onClick={handleGlobalPublish} 
+                disabled={uploading}
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg disabled:opacity-50">
+                {uploading ? "Publishing..." : "Publish to Global Cloud ☁️"}
               </button>
             </div>
 
             <div className="space-y-4">
               {reelsList.map((r: any, idx: number) => (
-                <div key={idx} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center shadow-xl">
+                <div key={idx} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center">
                   <video src={r.video} controls playsInline preload="metadata" className="w-full h-full object-cover"/>
-                  <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md">@{r.user}</div>
-                  <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl space-y-1">
+                  <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white">@{r.user}</div>
+                  <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl">
                     <p className="text-xs font-semibold text-white">{r.caption}</p>
                     <p className="text-[10px] text-neutral-300">📍 {r.location}</p>
                   </div>
