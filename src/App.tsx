@@ -239,7 +239,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS (Gallery Upload Restored) */}
+        {/* TAB 3: REELS (Unmuted Video Support Enabled) */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-2">
@@ -279,7 +279,7 @@ export default function App() {
             <div className="space-y-4">
               {reelsList.map((r: any) => (
                 <div key={r.id} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 shadow-xl flex items-center justify-center">
-                  <video src={r.video} controls autoPlay muted loop playsInline className="w-full h-full object-cover"/>
+                  <video src={r.video} controls playsInline preload="metadata" className="w-full h-full object-cover"/>
                   <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md">@{r.user}</div>
                   <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl space-y-1">
                     <p className="text-xs font-semibold text-white">{r.caption}</p>
