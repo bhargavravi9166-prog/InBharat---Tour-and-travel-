@@ -37,6 +37,10 @@ export default function App() {
   const [trainTo, setTrainTo] = useState("");
   const [trainResults, setTrainResults] = useState<any[] | null>(null);
 
+  // Hotel Booking State
+  const [hotelCity, setHotelCity] = useState("");
+  const [hotelResults, setHotelResults] = useState<any[] | null>(null);
+
   // Google Maps Direct Navigation State
   const [navSource, setNavSource] = useState("");
   const [navDestination, setNavDestination] = useState("");
@@ -94,7 +98,7 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Live IRCTC Booking & Direct Google Navigation</p>
+          <p className="text-[9px] text-neutral-400">All-in-One Hotels, Trains, GPS & Maps</p>
         </div>
         <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
       </div>
@@ -299,14 +303,58 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: TRAVEL TOOLS (IRCTC Booking, Google Maps Navigation & Road GPS) */}
+        {/* TAB 4: TRAVEL TOOLS (Hotels, IRCTC, Google Maps & GPS) */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
+            
+            {/* HOTEL & STAY BOOKING */}
+            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+              <h2 className="font-bold text-sm text-amber-400">🏨 Hotel & Stay Booking Gateway</h2>
+              <p className="text-[11px] text-neutral-400">Search best hotels, resorts, and homestays across India.</p>
+              
+              <input 
+                type="text" 
+                placeholder="Enter City or Destination (e.g. Jaipur / Mount Abu)" 
+                value={hotelCity} 
+                onChange={(e) => setHotelCity(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
+              />
+              <button 
+                onClick={() => {
+                  if(!hotelCity) return alert("Please enter a city or destination!");
+                  setHotelResults([
+                    { id: 1, name: "Luxury Heritage Palace & Resort", rating: "⭐️ 4.8", price: "₹3,499 / night" },
+                    { id: 2, name: "Comfort Inn & Budget Suites", rating: "⭐️ 4.2", price: "₹1,850 / night" }
+                  ]);
+                }}
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform">
+                Search Available Hotels
+              </button>
+
+              {hotelResults && (
+                <div className="space-y-2 pt-2 border-t border-neutral-800">
+                  {hotelResults.map((h) => (
+                    <div key={h.id} className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-white">{h.name}</p>
+                        <p className="text-[10px] text-neutral-400">{h.rating} • {h.price}</p>
+                      </div>
+                      <a 
+                        href="https://www.makemytrip.com/hotels/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="bg-emerald-600 px-3 py-1.5 rounded-lg font-bold text-white active:scale-95 text-center">
+                        Book Stay
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* GOOGLE MAPS DIRECT ROUTE NAVIGATION */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-emerald-400">🗺️ Google Maps Direct Route & Navigation</h2>
-              <p className="text-[11px] text-neutral-400">Enter source and destination to view live driving directions on Google Maps.</p>
-              
               <input 
                 type="text" 
                 placeholder="Starting From (e.g. Jaipur)" 
@@ -341,7 +389,7 @@ export default function App() {
               <h2 className="font-bold text-sm text-blue-400">🚂 Official IRCTC Train Booking Gateway</h2>
               <input 
                 type="text" 
-                placeholder="From Station (e.g. New Delhi - NDLS)" 
+                placeholder="From Station (e.g. NDLS)" 
                 value={trainFrom} 
                 onChange={(e) => setTrainFrom(e.target.value)}
                 className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"
@@ -389,8 +437,6 @@ export default function App() {
             {/* ROAD GPS TRACKER */}
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-emerald-400">🚗 Khud Ki Gaadi - Live Road GPS Tracker</h2>
-              <p className="text-[11px] text-neutral-400">Tracks real-time vehicle speed and total road distance.</p>
-              
               <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-center">
                 <div>
                   <p className="text-[10px] text-neutral-400">Live Speed</p>
