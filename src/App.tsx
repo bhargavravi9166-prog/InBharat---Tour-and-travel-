@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
@@ -14,8 +15,9 @@ const firebaseConfig = {
   measurementId: "G-2SCRX5ZGDF"
 };
 
-// Initialize Firebase & Storage
+// Initialize Firebase Services
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 const storage = getStorage(app);
 
 export default function App() {
@@ -28,27 +30,37 @@ export default function App() {
   const [tripDuration, setTripDuration] = useState("3 Days");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  // Reels State with LocalStorage Persistence
-  const [reelsList, setReelsList] = useState(() => {
-    try {
-      const saved = localStorage.getItem('in_bharat_cloud_reels');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error(e);
-    }
-    return [
-      { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, UK" },
-      { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view 🏰", likes: 2150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Badrinath, UK" }
-    ];
-  });
-
-  useEffect(() => {
-    localStorage.setItem('in_bharat_cloud_reels', JSON.stringify(reelsList));
-  }, [reelsList]);
-
+  // Reels State (Cloud Synced)
+  const [reelsList, setReelsList] = useState<any[]>([]);
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
   const [newReelCaption, setNewReelCaption] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  // Fetch Reels from Firebase Firestore on Load
+  useEffect(() => {
+    const fetchReels = async () => {
+      try {
+        const q = query(collection(db, "reels"), orderBy("id", "desc"));
+        const querySnapshot = await getDocs(q);
+        const cloudReels: any[] = [];
+        querySnapshot.forEach((doc) => {
+          cloudReels.push(doc.data());
+        });
+        if (cloudReels.length > 0) {
+          setReelsList(cloudReels);
+        } else {
+          // Default fallback reels if cloud is empty
+          setReelsList([
+            { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", likes: 4210, video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, UK" },
+            { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view 🏰", likes: 2150, video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Badrinath, UK" }
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching reels:", error);
+      }
+    };
+    fetchReels();
+  }, []);
 
   // Ixigo & IRCTC Booking State
   const [trainFrom, setTrainFrom] = useState("");
@@ -100,10 +112,10 @@ export default function App() {
     };
   }, [gpsActive]);
 
-  // Handle Cloud Upload to Firebase Storage
+  // Handle Cloud Upload to Firebase Storage & Firestore
   const handleCloudUpload = async () => {
     if (!selectedVideoFile || !newReelCaption) {
-      alert("Please select a video from gallery and enter a caption!");
+      alert("Pehle video select karo aur caption daalo!");
       return;
     }
 
@@ -122,11 +134,13 @@ export default function App() {
         location: "In Bharat Cloud"
       };
 
-      const updated = [newReel, ...reelsList];
-      setReelsList(updated);
+      // Save to Firestore Database
+      await addDoc(collection(db, "reels"), newReel);
+
+      setReelsList([newReel, ...reelsList]);
       setSelectedVideoFile(null);
       setNewReelCaption("");
-      alert("🎉 Video successfully uploaded to Firebase Cloud & Saved Permanently!");
+      alert("🎉 Video successfully cloud par upload ho gayi aur sabko dikhegi!");
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Upload failed. Please check internet connection.");
@@ -151,9 +165,9 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Firebase Cloud Storage Connected</p>
+          <p className="text-[9px] text-neutral-400">Global Cloud Database Connected</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Cloud Active</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">☁️ Global Live</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -304,11 +318,18 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS (Cloud Gallery Upload - Never Expires) */}
+        {/* TAB 3: REELS (Cloud Storage & Firestore Global Feed) */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-3 rounded-xl border border-neutral-800 space-y-2">
-              <h2 className="font-bold text-orange-400">📹 Select Video from Gallery & Upload to Cloud</h2>
+              <h2 className="font-bold text-orange-400">📹 Upload Video to Global Cloud Feed</h2>
+              <input 
+                type="text" 
+                placeholder="Caption & Location (e.g. Jaipur Fort)..." 
+                value={newReelCaption} 
+                onChange={(e) => setNewReelCaption(e.target.value)}
+                className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
+              />
               <input 
                 type="file" 
                 accept="video/*"
@@ -318,18 +339,11 @@ export default function App() {
                 }}
                 className="w-full p-2 bg-neutral-950 rounded-lg border border-neutral-800 text-white text-[11px] file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white"
               />
-              <input 
-                type="text" 
-                placeholder="Caption & Location (e.g. Jaipur Fort)..." 
-                value={newReelCaption} 
-                onChange={(e) => setNewReelCaption(e.target.value)}
-                className="w-full p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 text-white"
-              />
               <button 
                 onClick={handleCloudUpload}
                 disabled={uploading}
                 className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 font-bold text-white rounded-lg active:scale-95 transition-transform disabled:opacity-50">
-                {uploading ? '⏳ Uploading to Cloud...' : '☁️ Upload & Post Permanent Reel'}
+                {uploading ? '⏳ Uploading to Cloud...' : '☁️ Publish to Global Cloud'}
               </button>
             </div>
 
