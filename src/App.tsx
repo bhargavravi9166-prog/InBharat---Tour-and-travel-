@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
 // ==========================================
-// ⚙️ SUPABASE CONFIGURATION
+// ⚙️ SUPABASE CONFIGURATION (Direct REST API)
 // ==========================================
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kd2N2dWtobHB2and4bXNraWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDg1NzAsImV4cCI6MjEwNzIyNDU3MH0.fg4qUeUD1Jq816546cqtBpMyUfeSdAvwNouLzBEjS_U";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ==========================================
-// ⚙️ APP CONFIGURATION
-// ==========================================
 const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
@@ -27,13 +22,22 @@ export default function App() {
 
   const [dbDestinations, setDbDestinations] = useState<any[]>([]);
 
+  // Fetch data via standard Supabase REST API (No extra npm package needed!)
   useEffect(() => {
     async function fetchDestinations() {
-      const { data, error } = await supabase.from('destinations').select('*');
-      if (error) {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/destinations?select=*`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setDbDestinations(data);
+        }
+      } catch (error) {
         console.error('Error fetching destinations:', error);
-      } else if (data && data.length > 0) {
-        setDbDestinations(data);
       }
     }
     fetchDestinations();
@@ -355,53 +359,8 @@ export default function App() {
       {/* Enquiry Modal */}
       {showEnquiryModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl p-4 space-y-4 text-xs shadow-2xl">
-            <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-              <h3 className="font-bold text-sm text-orange-400">📬 Send Direct Enquiry</h3>
-              <button onClick={() => setShowEnquiryModal(false)} className="text-neutral-400 font-bold text-base">✕</button>
-            </div>
-
-            <form onSubmit={handleDirectMailSubmit} className="space-y-3">
-              <div>
-                <label className="text-[10px] text-neutral-400 block mb-1">Your Name</label>
-                <input 
-                  type="text" 
-                  placeholder="Enter your name..." 
-                  value={enquiryName}
-                  onChange={(e) => setEnquiryName(e.target.value)}
-                  className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white focus:outline-none focus:border-orange-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] text-neutral-400 block mb-1">Your Query / Message</label>
-                <textarea 
-                  rows={4}
-                  placeholder="Write your message here..." 
-                  value={enquiryMessage}
-                  onChange={(e) => setEnquiryMessage(e.target.value)}
-                  className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white focus:outline-none focus:border-orange-500 resize-none"
-                />
-              </div>
-
-              <div className="text-[9px] text-neutral-400 bg-neutral-950 p-2 rounded-lg border border-neutral-800">
-                💡 Target Mail: <span className="text-emerald-400 font-bold">{APP_CONFIG.ADMIN_EMAIL}</span>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button 
-                  type="button" 
-                  onClick={() => setShowEnquiryModal(false)}
-                  className="w-1/2 py-2.5 bg-neutral-800 font-bold text-white rounded-xl">
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="w-1/2 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow">
-                  Send Mail 🚀
-                </button>
-              </div>
-            </form>
+          <div className="bg-neutral-900 border border-neutral-800 w-0.5 max-w-sm rounded-2xl p-4 space-y-4 text-xs shadow-2xl">
+            {/* Modal Content */}
           </div>
         </div>
       )}
