@@ -114,9 +114,16 @@ export default function App() {
             <div className="space-y-4">
               {filteredDestinations.map(([key, dest]) => (
                 <div key={key} className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
-                  <div className="relative h-48 bg-neutral-950">
-                    <img src={dest.image_url} alt={dest.Name} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-transparent to-transparent"></div>
+                  <div className="relative h-48 bg-neutral-950 overflow-hidden">
+                    <img 
+                      src={dest.image_url} 
+                      alt={dest.Name} 
+                      className="w-full h-full object-cover" 
+                      onError={(e: any) => {
+                        e.target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/30 to-transparent"></div>
                     <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-orange-400 font-bold border border-neutral-800">
                       ☀️ {dest.weather}
                     </div>
@@ -225,7 +232,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: TRAVEL TOOLS (Without GPS Tracker) */}
+        {/* TAB 4: TRAVEL TOOLS */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
@@ -301,13 +308,38 @@ export default function App() {
 
       </div>
 
+      {/* FULL GUIDE DETAIL MODAL */}
       {activeCityKey && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto">
-            <h3 className="font-bold text-sm text-white">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.Name}</h3>
-            <p className="text-neutral-300">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.history_geo_political}</p>
-            <p className="text-amber-400 font-bold">Weather: {MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.weather}</p>
-            <button onClick={() => setActiveCityKey(null)} className="w-full py-2.5 bg-neutral-800 font-bold text-white rounded-xl">Close</button>
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
+              <h3 className="font-bold text-sm text-orange-400">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.Name}</h3>
+              <button onClick={() => setActiveCityKey(null)} className="text-neutral-400 font-bold text-base">✕</button>
+            </div>
+
+            <p className="text-neutral-300 leading-relaxed">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.history_geo_political}</p>
+            
+            <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 space-y-1">
+              <p className="text-amber-400 font-bold">☀️ Weather & Climate:</p>
+              <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.weather}</p>
+            </div>
+
+            <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 space-y-1">
+              <p className="text-amber-400 font-bold">🛍️ Markets & Local Food:</p>
+              <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.markets_food}</p>
+            </div>
+
+            <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 space-y-1">
+              <p className="text-orange-400 font-bold">🚗 Transport Roadmap:</p>
+              <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.transport_roadmap}</p>
+            </div>
+
+            <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 space-y-1">
+              <p className="text-rose-400 font-bold">💰 Estimated Budget:</p>
+              <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.budget}</p>
+            </div>
+
+            <button onClick={() => setActiveCityKey(null)} className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow">Close Guide</button>
           </div>
         </div>
       )}
