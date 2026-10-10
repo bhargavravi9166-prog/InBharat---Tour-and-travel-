@@ -50,7 +50,7 @@ export default function App() {
       return;
     }
 
-    const mailtoUrl = `mailto:${APP_CONFIG.ADMIN_EMAIL}?subject=Enquiry from ${encodeURIComponent(enquiryName)} via In Bharat Pro&body=${encodeURIComponent(enquiryMessage)}`;
+    const mailtoUrl = `mailto:${APP_CONFIG.ADMIN_EMAIL}?subject=Enquiry from ${encodeURIComponent(enquiryName)} via India Tour Trip&body=${encodeURIComponent(enquiryMessage)}`;
     window.location.href = mailtoUrl;
     setShowEnquiryModal(false);
     setEnquiryName("");
@@ -103,18 +103,20 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-white pb-24 font-sans select-none antialiased">
       
+      {/* Top Header */}
       <div className="bg-black/90 backdrop-blur-md border-b border-neutral-800 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
         <div>
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
-            IN BHARAT PRO 🇮🇳
+            INDIA TOUR TRIP 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Enterprise Tourism & Navigation Suite</p>
+          <p className="text-[9px] text-neutral-400">indiatourtrip.in • Enterprise Suite</p>
         </div>
         <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Supabase Connected</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
         
+        {/* TAB 1: HOME */}
         {tab === 'home' && (
           <div className="space-y-4">
             <div className="relative">
@@ -169,6 +171,7 @@ export default function App() {
           </div>
         )}
 
+        {/* TAB 2: AI TRIP PLANNER */}
         {tab === 'planner' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
@@ -225,6 +228,7 @@ export default function App() {
           </div>
         )}
 
+        {/* TAB 3: TRAVEL TOOLS */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
@@ -258,6 +262,7 @@ export default function App() {
           </div>
         )}
 
+        {/* TAB 4: PROFILE */}
         {tab === 'profile' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 text-center space-y-4 shadow-xl">
@@ -271,7 +276,7 @@ export default function App() {
               <div>
                 <h2 className="font-extrabold text-sm text-white tracking-wide">Ravi Bharggav</h2>
                 <p className="text-[11px] text-orange-400 font-bold mt-0.5">Founder & Managing Director</p>
-                <p className="text-[10px] text-neutral-400 mt-1">In Bharat Pro Technologies • India</p>
+                <p className="text-[10px] text-neutral-400 mt-1">indiatourtrip.in • India</p>
               </div>
 
               <div className="bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-left space-y-2">
@@ -302,6 +307,7 @@ export default function App() {
 
       </div>
 
+      {/* FULL GUIDE DETAIL MODAL */}
       {activeCityKey && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto">
@@ -346,6 +352,7 @@ export default function App() {
         </div>
       )}
 
+      {/* Enquiry Modal */}
       {showEnquiryModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl p-4 space-y-4 text-xs shadow-2xl">
@@ -399,6 +406,7 @@ export default function App() {
         </div>
       )}
 
+      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-neutral-800 py-3 px-8 flex justify-between items-center z-40 text-xl">
         <button onClick={() => setTab('home')} className={`${tab === 'home' ? 'text-white scale-110' : 'text-neutral-500'}`}>🏠</button>
         <button onClick={() => setTab('planner')} className={`${tab === 'planner' ? 'text-white scale-110' : 'text-neutral-500'}`}>🗺️</button>
