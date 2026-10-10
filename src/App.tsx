@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
 // ==========================================
-// ⚙️ SUPABASE CONFIGURATION (Direct REST API)
+// ⚙️ SUPABASE CONFIGURATION (Official Client)
 // ==========================================
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kd2N2dWtobHB2and4bXNraWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDg1NzAsImV4cCI6MjEwNzIyNDU3MH0.fg4qUeUD1Jq816546cqtBpMyUfeSdAvwNouLzBEjS_U";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
@@ -22,22 +24,18 @@ export default function App() {
 
   const [dbDestinations, setDbDestinations] = useState<any[]>([]);
 
-  // Fetch data via standard Supabase REST API (No extra npm package needed!)
+  // Fetch data via official Supabase Client
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/destinations?select=*`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          }
-        });
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
+        const { data, error } = await supabase.from('destinations').select('*');
+        if (error) {
+          console.error('Error fetching destinations:', error);
+        } else if (data && data.length > 0) {
           setDbDestinations(data);
         }
       } catch (error) {
-        console.error('Error fetching destinations:', error);
+        console.error('Unexpected error:', error);
       }
     }
     fetchDestinations();
