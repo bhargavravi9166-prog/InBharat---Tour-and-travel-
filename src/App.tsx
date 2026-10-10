@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
+
+// ==========================================
+// ⚙️ SUPABASE CONFIGURATION
+// ==========================================
+const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kd2N2dWtobHB2and4bXNraWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDg1NzAsImV4cCI6MjEwNzIyNDU3MH0.fg4qUeUD1Jq816546cqtBpMyUfeSdAvwNouLzBEjS_U";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==========================================
 // ⚙️ APP CONFIGURATION
 // ==========================================
 const APP_CONFIG = {
-  ADMIN_EMAIL: "C2studioindia@gmail.com", // Official Business Enquiry Email ID
+  ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
 export default function App() {
@@ -17,7 +25,20 @@ export default function App() {
   const [selectedDestKey, setSelectedDestKey] = useState("kedarnath");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  // Enquiry Modal States
+  const [dbDestinations, setDbDestinations] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchDestinations() {
+      const { data, error } = await supabase.from('destinations').select('*');
+      if (error) {
+        console.error('Error fetching destinations:', error);
+      } else if (data && data.length > 0) {
+        setDbDestinations(data);
+      }
+    }
+    fetchDestinations();
+  }, []);
+
   const [showEnquiryModal, setShowEnquiryModal] = useState(false);
   const [enquiryName, setEnquiryName] = useState("");
   const [enquiryMessage, setEnquiryMessage] = useState("");
@@ -45,33 +66,43 @@ export default function App() {
   const [navSource, setNavSource] = useState("");
   const [navDestination, setNavDestination] = useState("");
 
-  const filteredDestinations = Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).filter(([_, data]) =>
+  const sourceDirectory = dbDestinations.length > 0 
+    ? dbDestinations.map(item => ({
+        Name: item.name,
+        City: item.name,
+        State: item.state,
+        history_geo_political: item.description,
+        image_url: item.image_url,
+        weather: "Live from Supabase",
+        budget: "Flexible",
+        transport_roadmap: "Available via App Navigation",
+        markets_food: "Local Delicacies"
+      }))
+    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
+
+  const filteredDestinations = sourceDirectory.filter((data) =>
     data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    data.City.toLowerCase().includes(searchQuery.toLowerCase()) ||
     data.State.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredPlannerDestinations = Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).filter(([_, data]) =>
+  const filteredPlannerDestinations = sourceDirectory.filter((data) =>
     data.Name.toLowerCase().includes(plannerSearch.toLowerCase()) ||
-    data.City.toLowerCase().includes(plannerSearch.toLowerCase()) ||
     data.State.toLowerCase().includes(plannerSearch.toLowerCase())
   );
 
-  // Helper to jump straight to Hotel tab with pre-filled destination/city
   const handleSpotHotelSearch = (cityName: string) => {
     setHotelCity(cityName);
     setHotelResults([
       { id: 1, name: `${cityName} Heritage Stay`, price: "₹2,499 / night" },
       { id: 2, name: `${cityName} Deluxe Inn & Resort`, price: "₹3,899 / night" }
     ]);
-    setActiveCityKey(null); // Close modal if open
-    setTab('travel');     // Switch to Travel/Hotel tab instantly
+    setActiveCityKey(null);
+    setTab('travel');
   };
 
   return (
     <div className="min-h-screen bg-black text-white pb-24 font-sans select-none antialiased">
       
-      {/* Top Header */}
       <div className="bg-black/90 backdrop-blur-md border-b border-neutral-800 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
         <div>
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
@@ -79,12 +110,11 @@ export default function App() {
           </h1>
           <p className="text-[9px] text-neutral-400">Enterprise Tourism & Navigation Suite</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Supabase Connected</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
         
-        {/* TAB 1: HOME */}
         {tab === 'home' && (
           <div className="space-y-4">
             <div className="relative">
@@ -99,8 +129,8 @@ export default function App() {
             </div>
 
             <div className="space-y-4">
-              {filteredDestinations.map(([key, dest]) => (
-                <div key={key} className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
+              {filteredDestinations.map((dest, index) => (
+                <div key={index} className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
                   <div className="relative h-48 bg-neutral-950 overflow-hidden">
                     <img 
                       src={dest.image_url} 
@@ -118,11 +148,11 @@ export default function App() {
 
                   <div className="px-3 space-y-2 text-xs">
                     <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
-                    <p className="text-neutral-300 text-[11px] leading-relaxed">{dest.history_geo_political}</p>
+                    <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                     
                     <div className="flex gap-2 pt-1">
                       <button 
-                        onClick={() => setActiveCityKey(key)} 
+                        onClick={() => setActiveCityKey(dest.Name)} 
                         className="w-1/2 py-2.5 bg-neutral-800 font-bold text-white rounded-xl active:scale-95 transition-transform">
                         Full Guide →
                       </button>
@@ -139,7 +169,6 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: AI TRIP PLANNER */}
         {tab === 'planner' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
@@ -156,19 +185,22 @@ export default function App() {
               </div>
 
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {filteredPlannerDestinations.map(([k, d]) => (
+                {filteredPlannerDestinations.map((d, index) => (
                   <div 
-                    key={k} 
-                    onClick={() => { setSelectedDestKey(k); setPlannerSearch(d.Name); }}
-                    className={`p-2.5 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${selectedDestKey === k ? 'bg-orange-500/20 border-orange-500 text-orange-400 font-bold' : 'bg-neutral-950 border-neutral-800 text-neutral-300'}`}>
+                    key={index} 
+                    onClick={() => { setSelectedDestKey(d.Name); setPlannerSearch(d.Name); setGeneratedItinerary(d); }}
+                    className={`p-2.5 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${selectedDestKey === d.Name ? 'bg-orange-500/20 border-orange-500 text-orange-400 font-bold' : 'bg-neutral-950 border-neutral-800 text-neutral-300'}`}>
                     <span>{d.Name} ({d.State})</span>
-                    {selectedDestKey === k && <span>✓ Selected</span>}
+                    {selectedDestKey === d.Name && <span>✓ Selected</span>}
                   </div>
                 ))}
               </div>
 
               <button 
-                onClick={() => setGeneratedItinerary(MASTER_INDIA_TOURISM_DIRECTORY[selectedDestKey])}
+                onClick={() => {
+                  const found = sourceDirectory.find(d => d.Name === selectedDestKey) || sourceDirectory[0];
+                  setGeneratedItinerary(found);
+                }}
                 className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-lg shadow-lg active:scale-95 transition-transform">
                 Generate Custom Plan
               </button>
@@ -193,7 +225,6 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: TRAVEL TOOLS */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
@@ -227,7 +258,6 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: PROFILE */}
         {tab === 'profile' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 text-center space-y-4 shadow-xl">
@@ -272,40 +302,41 @@ export default function App() {
 
       </div>
 
-      {/* FULL GUIDE DETAIL MODAL */}
       {activeCityKey && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-              <h3 className="font-bold text-sm text-orange-400">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.Name}</h3>
+              <h3 className="font-bold text-sm text-orange-400">{sourceDirectory.find(d => d.Name === activeCityKey)?.Name}</h3>
               <button onClick={() => setActiveCityKey(null)} className="text-neutral-400 font-bold text-base">✕</button>
             </div>
 
-            <p className="text-neutral-300 leading-relaxed">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.history_geo_political}</p>
+            <p className="text-neutral-300 leading-relaxed">{sourceDirectory.find(d => d.Name === activeCityKey)?.history_geo_political}</p>
             
             <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 space-y-1">
               <p className="text-amber-400 font-bold">☀️ Weather & Climate:</p>
-              <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.weather}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.weather}</p>
             </div>
 
             <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 space-y-1">
               <p className="text-amber-400 font-bold">🛍️ Markets & Local Food:</p>
-              <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.markets_food}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.markets_food}</p>
             </div>
 
             <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 space-y-1">
               <p className="text-orange-400 font-bold">🚗 Transport Roadmap:</p>
-              <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.transport_roadmap}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.transport_roadmap}</p>
             </div>
 
             <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 space-y-1">
               <p className="text-rose-400 font-bold">💰 Estimated Budget:</p>
-              <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.budget}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.budget}</p>
             </div>
 
-            {/* DEDICATED HOTEL BOOKING BUTTON INSIDE MODAL */}
             <button 
-              onClick={() => handleSpotHotelSearch(MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.City || MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.Name)}
+              onClick={() => {
+                const found = sourceDirectory.find(d => d.Name === activeCityKey);
+                handleSpotHotelSearch(found?.City || found?.Name || "Destination");
+              }}
               className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
               🏨 View & Book Hotels Near This Spot
             </button>
@@ -315,7 +346,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Enquiry Modal */}
       {showEnquiryModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl p-4 space-y-4 text-xs shadow-2xl">
@@ -369,7 +399,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-neutral-800 py-3 px-8 flex justify-between items-center z-40 text-xl">
         <button onClick={() => setTab('home')} className={`${tab === 'home' ? 'text-white scale-110' : 'text-neutral-500'}`}>🏠</button>
         <button onClick={() => setTab('planner')} className={`${tab === 'planner' ? 'text-white scale-110' : 'text-neutral-500'}`}>🗺️</button>
