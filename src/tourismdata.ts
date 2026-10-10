@@ -5243,7 +5243,7 @@ export const MASTER_INDIA_TOURISM_DIRECTORY: Record<string, {
     budget: "₹4,000 - ₹12,000 per day",
     nearby_attractions: "Active volcanic crater views, surrounding deep-sea diving reefs, Long Island, Havelock Island, and Port Blair."
   },
-};  "ullal-beach-karnataka": {
+ "ullal-beach-karnataka": {
     Name: "Ullal Beach & Someshwara Coast",
     City: "Ullal (Mangalore)",
     State: "Karnataka",
@@ -6137,7 +6137,7 @@ export const MASTER_INDIA_TOURISM_DIRECTORY: Record<string, {
     budget: "₹1,500 - ₹5,500 per day",
     nearby_attractions: "Kumbhalgarh Fort (second longest wall in the world), Ranakpur Jain Temples, Haldighati museum, and Parshuram Mahadev Temple."
 },
- }  "van-vihar-madhya-pradesh": {
+  "van-vihar-madhya-pradesh": {
     Name: "Van Vihar National Park",
     City: "Bhopal",
     State: "Madhya Pradesh",
@@ -6279,4 +6279,4 @@ export const MASTER_INDIA_TOURISM_DIRECTORY: Record<string, {
     budget: "₹2,500 - ₹7,500 per day",
     nearby_attractions: "Elephant Beach, Radhanagar Beach, Neil's Cove, deep-sea snorkeling reefs, and Barren Island volcano tours."
   },
-}
+};
