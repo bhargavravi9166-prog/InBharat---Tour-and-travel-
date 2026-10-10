@@ -8,23 +8,8 @@ const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com", // Official Business Enquiry Email ID
 };
 
-const MASTER_GLOBAL_REELS_POOL = [
-  { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", location: "Kedarnath, Uttarakhand" },
-  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", location: "Jaipur, Rajasthan" },
-  { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", location: "New Delhi" },
-  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", location: "Mount Abu, Rajasthan" },
-  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", location: "Raigad, Maharashtra" },
-  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", location: "Alleppey, Kerala" },
-  { id: 7, user: "agra_taj", caption: "Symbol of Love - The Magnificent Taj Mahal 🤍", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", location: "Agra, Uttar Pradesh" },
-  { id: 8, user: "varanasi_ghats", caption: "Magical Ganga Aarti at Dashashwamedh Ghat 🪔", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", location: "Varanasi, Uttar Pradesh" },
-  { id: 9, user: "goa_beaches", caption: "Golden Sunset Waves at Palolem Beach 🌊", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", location: "Goa" },
-  { id: 10, user: "himachal_diaries", caption: "Snow-covered Solang Valley in Manali ❄️", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", location: "Manali, Himachal Pradesh" },
-  { id: 11, user: "karnataka_heritage", caption: "Ancient Stone Architecture of Hampi Ruins 🛕", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", location: "Hampi, Karnataka" },
-  { id: 12, user: "udaipur_lakes", caption: "The Venice of the East - City Palace Lake Pichola ⛵", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", location: "Udaipur, Rajasthan" }
-];
-
 export default function App() {
-  const [tab, setTab] = useState<'home' | 'planner' | 'reels' | 'travel' | 'profile'>('home');
+  const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile'>('home');
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
@@ -49,15 +34,6 @@ export default function App() {
     setShowEnquiryModal(false);
     setEnquiryName("");
     setEnquiryMessage("");
-  };
-
-  const [reelsList, setReelsList] = useState(() => {
-    return [...MASTER_GLOBAL_REELS_POOL].sort(() => Math.random() - 0.5);
-  });
-
-  const handleRefreshFeed = () => {
-    const shuffled = [...MASTER_GLOBAL_REELS_POOL].sort(() => Math.random() - 0.5);
-    setReelsList(shuffled);
   };
 
   const [trainFrom, setTrainFrom] = useState("");
@@ -193,46 +169,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS */}
-        {tab === 'reels' && (
-          <div className="space-y-4 text-xs">
-            <div className="flex justify-between items-center bg-neutral-900 p-3 rounded-xl border border-neutral-800">
-              <div>
-                <h2 className="font-bold text-orange-400 text-sm">🎬 Global Forts & Picnic Reels</h2>
-                <p className="text-[10px] text-neutral-400">Unlimited pre-loaded running feed ({reelsList.length} Reels)</p>
-              </div>
-              <button 
-                onClick={handleRefreshFeed}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs active:scale-95 transition-transform shadow">
-                🔄 Refresh Feed
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {reelsList.map((r: any, idx: number) => (
-                <div key={idx} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center shadow-xl">
-                  <video 
-                    src={r.video} 
-                    autoPlay 
-                    muted 
-                    loop 
-                    playsInline 
-                    controls 
-                    preload="auto" 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md">@{r.user}</div>
-                  <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl space-y-1">
-                    <p className="text-xs font-semibold text-white">{r.caption}</p>
-                    <p className="text-[10px] text-neutral-300">📍 {r.location}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: TRAVEL TOOLS */}
+        {/* TAB 3: TRAVEL TOOLS */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
@@ -263,7 +200,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: PROFILE */}
+        {/* TAB 4: PROFILE */}
         {tab === 'profile' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 text-center space-y-4 shadow-xl">
@@ -398,11 +335,10 @@ export default function App() {
         </div>
       )}
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-neutral-800 py-3 px-6 flex justify-between items-center z-40 text-xl">
+      {/* Bottom Navigation (4 Tabs now: Home, Planner, Travel, Profile) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-neutral-800 py-3 px-8 flex justify-between items-center z-40 text-xl">
         <button onClick={() => setTab('home')} className={`${tab === 'home' ? 'text-white scale-110' : 'text-neutral-500'}`}>🏠</button>
         <button onClick={() => setTab('planner')} className={`${tab === 'planner' ? 'text-white scale-110' : 'text-neutral-500'}`}>🗺️</button>
-        <button onClick={() => setTab('reels')} className={`${tab === 'reels' ? 'text-white scale-110' : 'text-neutral-500'}`}>🎬</button>
         <button onClick={() => setTab('travel')} className={`${tab === 'travel' ? 'text-white scale-110' : 'text-neutral-500'}`}>🚗</button>
         <button onClick={() => setTab('profile')} className={`${tab === 'profile' ? 'text-white scale-110' : 'text-neutral-500'}`}>👤</button>
       </div>
