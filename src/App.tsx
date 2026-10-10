@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
-// ==========================================
-// ⚙️ SUPABASE CONFIGURATION (Official Client)
-// ==========================================
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kd2N2dWtobHB2and4bXNraWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDg1NzAsImV4cCI6MjEwNzIyNDU3MH0.fg4qUeUD1Jq816546cqtBpMyUfeSdAvwNouLzBEjS_U";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
 export default function App() {
-  const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile'>('home');
+  const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile' | 'legal'>('home');
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
@@ -24,18 +19,21 @@ export default function App() {
 
   const [dbDestinations, setDbDestinations] = useState<any[]>([]);
 
-  // Fetch data via official Supabase Client
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        const { data, error } = await supabase.from('destinations').select('*');
-        if (error) {
-          console.error('Error fetching destinations:', error);
-        } else if (data && data.length > 0) {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/destinations?select=*`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
           setDbDestinations(data);
         }
       } catch (error) {
-        console.error('Unexpected error:', error);
+        console.error('Error fetching destinations:', error);
       }
     }
     fetchDestinations();
@@ -95,8 +93,8 @@ export default function App() {
   const handleSpotHotelSearch = (cityName: string) => {
     setHotelCity(cityName);
     setHotelResults([
-      { id: 1, name: `${cityName} Heritage Stay`, price: "₹2,499 / night" },
-      { id: 2, name: `${cityName} Deluxe Inn & Resort`, price: "₹3,899 / night" }
+      { id: 1, name: `${cityName} Heritage Stay`, price: "₹2,499 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" },
+      { id: 2, name: `${cityName} Deluxe Inn & Resort`, price: "₹3,899 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }
     ]);
     setActiveCityKey(null);
     setTab('travel');
@@ -234,16 +232,16 @@ export default function App() {
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-amber-400">🏨 Hotel Booking</h2>
+              <h2 className="font-bold text-sm text-amber-400">🏨 Hotel Booking (Affiliate Ready)</h2>
               <input type="text" placeholder="Enter City or Spot" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
-              <button onClick={() => setHotelResults([{ id: 1, name: `${hotelCity || 'Local'} Heritage Palace`, price: "₹3,499 / night" }, { id: 2, name: `${hotelCity || 'Local'} Luxury Stay`, price: "₹4,899 / night" }])} className="w-full py-2.5 bg-orange-500 font-bold text-white rounded-xl">Search Hotels</button>
+              <button onClick={() => setHotelResults([{ id: 1, name: `${hotelCity || 'Local'} Heritage Palace`, price: "₹3,499 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }, { id: 2, name: `${hotelCity || 'Local'} Luxury Stay`, price: "₹4,899 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }])} className="w-full py-2.5 bg-orange-500 font-bold text-white rounded-xl">Search Hotels</button>
               {hotelResults && hotelResults.map(h => (
                 <div key={h.id} className="bg-neutral-950 p-2.5 rounded-xl flex justify-between items-center border border-neutral-800">
                   <div>
                     <p className="font-bold text-white">{h.name}</p>
                     <p className="text-[10px] text-rose-400 font-semibold">{h.price}</p>
                   </div>
-                  <a href="https://www.makemytrip.com/hotels/" target="_blank" rel="noopener noreferrer" className="bg-emerald-600 px-3 py-1.5 rounded-lg font-bold text-white">Book Now</a>
+                  <a href={h.affiliateUrl} target="_blank" rel="noopener noreferrer" className="bg-emerald-600 px-3 py-1.5 rounded-lg font-bold text-white">Book Now</a>
                 </div>
               ))}
             </div>
@@ -302,8 +300,50 @@ export default function App() {
                     ✉️ Send Enquiry
                   </button>
                 </div>
+
+                <div className="pt-2">
+                  <button 
+                    onClick={() => setTab('legal')} 
+                    className="w-full py-2 bg-neutral-800 font-bold text-amber-400 rounded-xl text-center border border-neutral-700">
+                    📜 Privacy Policy & Terms
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB 5: LEGAL & PRIVACY POLICY (Required for Affiliate Approval) */}
+        {tab === 'legal' && (
+          <div className="space-y-4 text-xs bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
+              <h2 className="font-bold text-sm text-amber-400">📜 Legal & Policies</h2>
+              <button onClick={() => setTab('profile')} className="text-neutral-400 font-bold text-base">✕</button>
+            </div>
+
+            <div className="space-y-3 text-[11px] text-neutral-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+              <div>
+                <h3 className="font-bold text-orange-400">1. Privacy Policy</h3>
+                <p>Welcome to indiatourtrip.in. We respect your privacy and are committed to protecting any personal information you share with us during your travel exploration and booking navigation.</p>
+              </div>
+
+              <div>
+                <h3 className="font-bold text-orange-400">2. Affiliate Disclosure</h3>
+                <p>indiatourtrip.in participates in various affiliate marketing programs, which means we may get paid commissions on editorial choice products purchased through our links to retailer sites (such as MakeMyTrip, Booking.com, etc.). This comes at no additional cost to you.</p>
+              </div>
+
+              <div>
+                <h3 className="font-bold text-orange-400">3. Terms & Conditions</h3>
+                <p>By accessing indiatourtrip.in, you agree to comply with our terms. All tourism data, maps guidance, and itinerary planners are provided for travel assistance and exploration purposes.</p>
+              </div>
+
+              <div>
+                <h3 className="font-bold text-orange-400">4. Contact Information</h3>
+                <p>For any queries or partnership requests, reach out directly to our management at: <span className="text-emerald-400 font-bold">{APP_CONFIG.ADMIN_EMAIL}</span></p>
+              </div>
+            </div>
+
+            <button onClick={() => setTab('profile')} className="w-full py-2.5 bg-orange-500 font-bold text-white rounded-xl">Back to Profile</button>
           </div>
         )}
 
