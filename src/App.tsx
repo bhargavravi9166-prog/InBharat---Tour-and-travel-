@@ -57,6 +57,17 @@ export default function App() {
     data.State.toLowerCase().includes(plannerSearch.toLowerCase())
   );
 
+  // Helper to jump straight to Hotel tab with pre-filled destination/city
+  const handleSpotHotelSearch = (cityName: string) => {
+    setHotelCity(cityName);
+    setHotelResults([
+      { id: 1, name: `${cityName} Heritage Stay`, price: "₹2,499 / night" },
+      { id: 2, name: `${cityName} Deluxe Inn & Resort`, price: "₹3,899 / night" }
+    ]);
+    setActiveCityKey(null); // Close modal if open
+    setTab('travel');     // Switch to Travel/Hotel tab instantly
+  };
+
   return (
     <div className="min-h-screen bg-black text-white pb-24 font-sans select-none antialiased">
       
@@ -108,11 +119,19 @@ export default function App() {
                   <div className="px-3 space-y-2 text-xs">
                     <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
                     <p className="text-neutral-300 text-[11px] leading-relaxed">{dest.history_geo_political}</p>
-                    <button 
-                      onClick={() => setActiveCityKey(key)} 
-                      className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform">
-                      Explore Full Guide →
-                    </button>
+                    
+                    <div className="flex gap-2 pt-1">
+                      <button 
+                        onClick={() => setActiveCityKey(key)} 
+                        className="w-1/2 py-2.5 bg-neutral-800 font-bold text-white rounded-xl active:scale-95 transition-transform">
+                        Full Guide →
+                      </button>
+                      <button 
+                        onClick={() => handleSpotHotelSearch(dest.City || dest.Name)} 
+                        className="w-1/2 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1">
+                        🏨 Find Hotels
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -164,6 +183,11 @@ export default function App() {
                   <p className="text-[10px] text-neutral-300">{generatedItinerary.transport_roadmap}</p>
                 </div>
                 <p className="text-rose-400 font-bold text-[10px]">💰 Estimated Budget: {generatedItinerary.budget}</p>
+                <button 
+                  onClick={() => handleSpotHotelSearch(generatedItinerary.City || generatedItinerary.Name)}
+                  className="w-full py-2 bg-orange-500 font-bold text-white rounded-xl text-xs">
+                  🏨 Book Stay Here
+                </button>
               </div>
             )}
           </div>
@@ -174,12 +198,15 @@ export default function App() {
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-amber-400">🏨 Hotel Booking</h2>
-              <input type="text" placeholder="Enter City" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
-              <button onClick={() => setHotelResults([{ id: 1, name: "Heritage Palace", price: "₹3,499 / night" }])} className="w-full py-2.5 bg-orange-500 font-bold text-white rounded-xl">Search Hotels</button>
+              <input type="text" placeholder="Enter City or Spot" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
+              <button onClick={() => setHotelResults([{ id: 1, name: `${hotelCity || 'Local'} Heritage Palace`, price: "₹3,499 / night" }, { id: 2, name: `${hotelCity || 'Local'} Luxury Stay`, price: "₹4,899 / night" }])} className="w-full py-2.5 bg-orange-500 font-bold text-white rounded-xl">Search Hotels</button>
               {hotelResults && hotelResults.map(h => (
-                <div key={h.id} className="bg-neutral-950 p-2 rounded-xl flex justify-between items-center">
-                  <span>{h.name} - {h.price}</span>
-                  <a href="https://www.makemytrip.com/hotels/" target="_blank" rel="noopener noreferrer" className="bg-emerald-600 px-3 py-1 rounded font-bold">Book</a>
+                <div key={h.id} className="bg-neutral-950 p-2.5 rounded-xl flex justify-between items-center border border-neutral-800">
+                  <div>
+                    <p className="font-bold text-white">{h.name}</p>
+                    <p className="text-[10px] text-rose-400 font-semibold">{h.price}</p>
+                  </div>
+                  <a href="https://www.makemytrip.com/hotels/" target="_blank" rel="noopener noreferrer" className="bg-emerald-600 px-3 py-1.5 rounded-lg font-bold text-white">Book Now</a>
                 </div>
               ))}
             </div>
@@ -276,7 +303,14 @@ export default function App() {
               <p className="text-neutral-300 text-[11px]">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.budget}</p>
             </div>
 
-            <button onClick={() => setActiveCityKey(null)} className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow">Close Guide</button>
+            {/* DEDICATED HOTEL BOOKING BUTTON INSIDE MODAL */}
+            <button 
+              onClick={() => handleSpotHotelSearch(MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.City || MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.Name)}
+              className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+              🏨 View & Book Hotels Near This Spot
+            </button>
+
+            <button onClick={() => setActiveCityKey(null)} className="w-full py-2 bg-neutral-800 font-bold text-white rounded-xl">Close Guide</button>
           </div>
         </div>
       )}
@@ -335,7 +369,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Bottom Navigation (4 Tabs now: Home, Planner, Travel, Profile) */}
+      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-neutral-800 py-3 px-8 flex justify-between items-center z-40 text-xl">
         <button onClick={() => setTab('home')} className={`${tab === 'home' ? 'text-white scale-110' : 'text-neutral-500'}`}>🏠</button>
         <button onClick={() => setTab('planner')} className={`${tab === 'planner' ? 'text-white scale-110' : 'text-neutral-500'}`}>🗺️</button>
