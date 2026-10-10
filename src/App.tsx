@@ -9,13 +9,18 @@ const APP_CONFIG = {
 };
 
 const MASTER_GLOBAL_REELS_POOL = [
-  { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", location: "Kedarnath, Uttarakhand" },
-  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", location: "Jaipur, Rajasthan" },
-  { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", location: "New Delhi" },
-  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", location: "Mount Abu, Rajasthan" },
-  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", location: "Raigad, Maharashtra" },
-  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", location: "Alleppey, Kerala" },
-  { id: 7, user: "agra_taj", caption: "Symbol of Love - The Magnificent Taj Mahal 🤍", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", location: "Agra, Uttar Pradesh" }
+  { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", location: "Kedarnath, Uttarakhand" },
+  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", location: "Jaipur, Rajasthan" },
+  { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", location: "New Delhi" },
+  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", location: "Mount Abu, Rajasthan" },
+  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", location: "Raigad, Maharashtra" },
+  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", location: "Alleppey, Kerala" },
+  { id: 7, user: "agra_taj", caption: "Symbol of Love - The Magnificent Taj Mahal 🤍", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", location: "Agra, Uttar Pradesh" },
+  { id: 8, user: "varanasi_ghats", caption: "Magical Ganga Aarti at Dashashwamedh Ghat 🪔", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", location: "Varanasi, Uttar Pradesh" },
+  { id: 9, user: "goa_beaches", caption: "Golden Sunset Waves at Palolem Beach 🌊", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", location: "Goa" },
+  { id: 10, user: "himachal_diaries", caption: "Snow-covered Solang Valley in Manali ❄️", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", location: "Manali, Himachal Pradesh" },
+  { id: 11, user: "karnataka_heritage", caption: "Ancient Stone Architecture of Hampi Ruins 🛕", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", location: "Hampi, Karnataka" },
+  { id: 12, user: "udaipur_lakes", caption: "The Venice of the East - City Palace Lake Pichola ⛵", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", location: "Udaipur, Rajasthan" }
 ];
 
 export default function App() {
@@ -63,42 +68,6 @@ export default function App() {
 
   const [navSource, setNavSource] = useState("");
   const [navDestination, setNavDestination] = useState("");
-
-  const [gpsActive, setGpsActive] = useState(false);
-  const [vehicleSpeed, setVehicleSpeed] = useState(0);
-  const [totalKm, setTotalKm] = useState(0);
-
-  useEffect(() => {
-    let watchId: number;
-    if (gpsActive) {
-      if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser");
-        setGpsActive(false);
-        return;
-      }
-
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const speedMs = position.coords.speed;
-          const speedKmh = speedMs ? Math.round(speedMs * 3.6) : Math.floor(Math.random() * 15) + 35;
-          setVehicleSpeed(speedKmh);
-          setTotalKm(prev => Number((prev + 0.2).toFixed(2)));
-        },
-        (error) => {
-          console.warn("GPS simulation fallback active:", error);
-          setVehicleSpeed(45);
-          setTotalKm(prev => Number((prev + 0.2).toFixed(2)));
-        },
-        { enableHighAccuracy: false, maximumAge: 10000, timeout: 20000 }
-      );
-    } else {
-      setVehicleSpeed(0);
-    }
-
-    return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-    };
-  }, [gpsActive]);
 
   const filteredDestinations = Object.entries(MASTER_INDIA_TOURISM_DIRECTORY).filter(([_, data]) =>
     data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -223,7 +192,7 @@ export default function App() {
             <div className="flex justify-between items-center bg-neutral-900 p-3 rounded-xl border border-neutral-800">
               <div>
                 <h2 className="font-bold text-orange-400 text-sm">🎬 Global Forts & Picnic Reels</h2>
-                <p className="text-[10px] text-neutral-400">Unlimited pre-loaded running feed</p>
+                <p className="text-[10px] text-neutral-400">Unlimited pre-loaded running feed ({reelsList.length} Reels)</p>
               </div>
               <button 
                 onClick={handleRefreshFeed}
@@ -235,7 +204,16 @@ export default function App() {
             <div className="space-y-4">
               {reelsList.map((r: any, idx: number) => (
                 <div key={idx} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center shadow-xl">
-                  <video src={r.video} controls playsInline preload="auto" className="w-full h-full object-cover"/>
+                  <video 
+                    src={r.video} 
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline 
+                    controls 
+                    preload="auto" 
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md">@{r.user}</div>
                   <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl space-y-1">
                     <p className="text-xs font-semibold text-white">{r.caption}</p>
@@ -247,7 +225,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: TRAVEL TOOLS */}
+        {/* TAB 4: TRAVEL TOOLS (Without GPS Tracker) */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
@@ -274,17 +252,6 @@ export default function App() {
               <input type="text" placeholder="From Station" value={trainFrom} onChange={(e) => setTrainFrom(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <input type="text" placeholder="To Station" value={trainTo} onChange={(e) => setTrainTo(e.target.value)} className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white"/>
               <a href="https://www.irctc.co.in" target="_blank" rel="noopener noreferrer" className="block text-center bg-orange-500 py-2.5 rounded-xl font-bold text-white">Book on IRCTC</a>
-            </div>
-
-            <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
-              <h2 className="font-bold text-sm text-emerald-400">🚗 Live GPS Tracker</h2>
-              <div className="grid grid-cols-2 gap-3 bg-neutral-950 p-3 rounded-xl text-center">
-                <div><p className="text-[10px]">Speed</p><h3 className="text-xl font-black text-emerald-400">{vehicleSpeed} km/h</h3></div>
-                <div><p className="text-[10px]">Distance</p><h3 className="text-xl font-black text-white">{totalKm} km</h3></div>
-              </div>
-              <button onClick={() => setGpsActive(!gpsActive)} className={`w-full py-2.5 font-bold rounded-xl text-white ${gpsActive ? 'bg-rose-600' : 'bg-emerald-600'}`}>
-                {gpsActive ? '🛑 Stop GPS' : '▶️ Start GPS'}
-              </button>
             </div>
           </div>
         )}
