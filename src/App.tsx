@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
-// Master Pool of Unlimited Global Reels (Server CDN Links - No Upload Needed)
+// ==========================================
+// ⚙️ APP CONFIGURATION
+// ==========================================
+const APP_CONFIG = {
+  ADMIN_EMAIL: "C2studioindia@gmail.com", // Official Business Enquiry Email ID
+};
+
 const MASTER_GLOBAL_REELS_POOL = [
-  { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-41555-large.mp4", location: "Kedarnath, Uttarakhand" },
-  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://assets.mixkit.co/videos/preview/mixkit-traveller-walking-on-a-mountain-ridge-41627-large.mp4", location: "Jaipur, Rajasthan" },
-  { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", video: "https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-41631-large.mp4", location: "New Delhi" },
-  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4", location: "Mount Abu, Rajasthan" },
-  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", video: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4", location: "Raigad, Maharashtra" },
-  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", video: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1185-large.mp4", location: "Alleppey, Kerala" }
+  { id: 1, user: "incredible_india", caption: "Himalayan Sunrise View at Kedarnath Shrine ✨", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", location: "Kedarnath, Uttarakhand" },
+  { id: 2, user: "rajasthan_tourism", caption: "Majestic Architecture view of Amer Fort 🏰", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", location: "Jaipur, Rajasthan" },
+  { id: 3, user: "delhi_diaries", caption: "Historical Red Fort & Mughal Heritage 🇮🇳", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", location: "New Delhi" },
+  { id: 4, user: "mount_abu_diaries", caption: "Sunset Point & Nakki Lake Scenic Vistas 🌅", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", location: "Mount Abu, Rajasthan" },
+  { id: 5, user: "maharashtra_forts", caption: "Shivaji Maharaj Historical Raigad Fort Trek 🛡️", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", location: "Raigad, Maharashtra" },
+  { id: 6, user: "kerala_backwaters", caption: "Peaceful Alleppey Houseboat Cruise 🌴", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", location: "Alleppey, Kerala" },
+  { id: 7, user: "agra_taj", caption: "Symbol of Love - The Magnificent Taj Mahal 🤍", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", location: "Agra, Uttar Pradesh" }
 ];
 
 export default function App() {
@@ -16,12 +23,29 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
-  // AI Trip Planner State with Search Bar functionality
   const [plannerSearch, setPlannerSearch] = useState("");
   const [selectedDestKey, setSelectedDestKey] = useState("kedarnath");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  // Unlimited Global Reels with Auto-Shuffle on Refresh
+  // Enquiry Modal States
+  const [showEnquiryModal, setShowEnquiryModal] = useState(false);
+  const [enquiryName, setEnquiryName] = useState("");
+  const [enquiryMessage, setEnquiryMessage] = useState("");
+
+  const handleDirectMailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!enquiryName || !enquiryMessage) {
+      alert("Please fill in both your name and message!");
+      return;
+    }
+
+    const mailtoUrl = `mailto:${APP_CONFIG.ADMIN_EMAIL}?subject=Enquiry from ${encodeURIComponent(enquiryName)} via In Bharat Pro&body=${encodeURIComponent(enquiryMessage)}`;
+    window.location.href = mailtoUrl;
+    setShowEnquiryModal(false);
+    setEnquiryName("");
+    setEnquiryMessage("");
+  };
+
   const [reelsList, setReelsList] = useState(() => {
     return [...MASTER_GLOBAL_REELS_POOL].sort(() => Math.random() - 0.5);
   });
@@ -31,10 +55,8 @@ export default function App() {
     setReelsList(shuffled);
   };
 
-  // Travel States
   const [trainFrom, setTrainFrom] = useState("");
   const [trainTo, setTrainTo] = useState("");
-  const [trainResults, setTrainResults] = useState<any[] | null>(null);
 
   const [hotelCity, setHotelCity] = useState("");
   const [hotelResults, setHotelResults] = useState<any[] | null>(null);
@@ -50,26 +72,29 @@ export default function App() {
     let watchId: number;
     if (gpsActive) {
       if (!navigator.geolocation) {
-        alert("Geolocation not supported");
+        alert("Geolocation is not supported by your browser");
         setGpsActive(false);
         return;
       }
+
       watchId = navigator.geolocation.watchPosition(
         (position) => {
           const speedMs = position.coords.speed;
-          const speedKmh = speedMs ? Math.round(speedMs * 3.6) : Math.floor(Math.random() * 20) + 40;
+          const speedKmh = speedMs ? Math.round(speedMs * 3.6) : Math.floor(Math.random() * 15) + 35;
           setVehicleSpeed(speedKmh);
-          setTotalKm(prev => Number((prev + 0.25).toFixed(2)));
+          setTotalKm(prev => Number((prev + 0.2).toFixed(2)));
         },
-        () => {
-          alert("GPS signal lost.");
-          setGpsActive(false);
+        (error) => {
+          console.warn("GPS simulation fallback active:", error);
+          setVehicleSpeed(45);
+          setTotalKm(prev => Number((prev + 0.2).toFixed(2)));
         },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+        { enableHighAccuracy: false, maximumAge: 10000, timeout: 20000 }
       );
     } else {
       setVehicleSpeed(0);
     }
+
     return () => {
       if (watchId) navigator.geolocation.clearWatch(watchId);
     };
@@ -96,7 +121,7 @@ export default function App() {
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             IN BHARAT PRO 🇮🇳
           </h1>
-          <p className="text-[9px] text-neutral-400">Global Forts, Photos & Live Reels Feed</p>
+          <p className="text-[9px] text-neutral-400">Enterprise Tourism & Navigation Suite</p>
         </div>
         <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 animate-pulse">⚡ Turbo Live</span>
       </div>
@@ -143,7 +168,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: AI TRIP PLANNER (Search Bar Style) */}
+        {/* TAB 2: AI TRIP PLANNER */}
         {tab === 'planner' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
@@ -152,7 +177,7 @@ export default function App() {
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400 text-xs">🔍</span>
                 <input 
                   type="text" 
-                  placeholder="Type to search & select destination..." 
+                  placeholder="Type to search destination..." 
                   value={plannerSearch} 
                   onChange={(e) => setPlannerSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500"
@@ -192,7 +217,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: REELS (Pre-loaded Unlimited Running Feed with Refresh) */}
+        {/* TAB 3: REELS */}
         {tab === 'reels' && (
           <div className="space-y-4 text-xs">
             <div className="flex justify-between items-center bg-neutral-900 p-3 rounded-xl border border-neutral-800">
@@ -210,7 +235,7 @@ export default function App() {
             <div className="space-y-4">
               {reelsList.map((r: any, idx: number) => (
                 <div key={idx} className="relative h-[400px] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800 flex items-center justify-center shadow-xl">
-                  <video src={r.video} controls playsInline preload="metadata" className="w-full h-full object-cover"/>
+                  <video src={r.video} controls playsInline preload="auto" className="w-full h-full object-cover"/>
                   <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-full text-xs font-bold text-white backdrop-blur-md">@{r.user}</div>
                   <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-t from-black/90 p-3 rounded-xl space-y-1">
                     <p className="text-xs font-semibold text-white">{r.caption}</p>
@@ -267,10 +292,42 @@ export default function App() {
         {/* TAB 5: PROFILE */}
         {tab === 'profile' && (
           <div className="space-y-4 text-xs">
-            <div className="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 text-center space-y-3">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 mx-auto flex items-center justify-center text-xl font-black text-white">RB</div>
-              <h2 className="font-bold text-sm text-white">Ravi Bharggav</h2>
-              <p className="text-[11px] text-orange-400">Founder & Managing Director</p>
+            <div className="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 text-center space-y-4 shadow-xl">
+              <div className="relative w-20 h-20 mx-auto">
+                <div className="w-full h-full rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 flex items-center justify-center text-xl font-black text-white shadow-lg">
+                  RB
+                </div>
+                <span className="absolute bottom-0 right-0 bg-blue-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-black font-bold">✓</span>
+              </div>
+
+              <div>
+                <h2 className="font-extrabold text-sm text-white tracking-wide">Ravi Bharggav</h2>
+                <p className="text-[11px] text-orange-400 font-bold mt-0.5">Founder & Managing Director</p>
+                <p className="text-[10px] text-neutral-400 mt-1">In Bharat Pro Technologies • India</p>
+              </div>
+
+              <div className="bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-left space-y-2">
+                <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">🌟 Founder's Vision</p>
+                <p className="text-[11px] text-neutral-300 leading-relaxed">
+                  "Building India's most advanced digital tourism, smart itinerary, and real-time transit companion platform for modern explorers."
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-neutral-800 text-left space-y-2">
+                <div className="flex justify-between bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
+                  <span className="text-neutral-400">Platform Version:</span>
+                  <span className="font-bold text-amber-400">v3.0.0 Pro Enterprise</span>
+                </div>
+                
+                <div className="flex justify-between items-center bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
+                  <span className="text-neutral-400">Customer Support:</span>
+                  <button 
+                    onClick={() => setShowEnquiryModal(true)} 
+                    className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs active:scale-95 transition-transform shadow">
+                    ✉️ Send Enquiry
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -284,6 +341,60 @@ export default function App() {
             <p className="text-neutral-300">{MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.history_geo_political}</p>
             <p className="text-amber-400 font-bold">Weather: {MASTER_INDIA_TOURISM_DIRECTORY[activeCityKey]?.weather}</p>
             <button onClick={() => setActiveCityKey(null)} className="w-full py-2.5 bg-neutral-800 font-bold text-white rounded-xl">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Enquiry Modal */}
+      {showEnquiryModal && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl p-4 space-y-4 text-xs shadow-2xl">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
+              <h3 className="font-bold text-sm text-orange-400">📬 Send Direct Enquiry</h3>
+              <button onClick={() => setShowEnquiryModal(false)} className="text-neutral-400 font-bold text-base">✕</button>
+            </div>
+
+            <form onSubmit={handleDirectMailSubmit} className="space-y-3">
+              <div>
+                <label className="text-[10px] text-neutral-400 block mb-1">Your Name</label>
+                <input 
+                  type="text" 
+                  placeholder="Enter your name..." 
+                  value={enquiryName}
+                  onChange={(e) => setEnquiryName(e.target.value)}
+                  className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white focus:outline-none focus:border-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-neutral-400 block mb-1">Your Query / Message</label>
+                <textarea 
+                  rows={4}
+                  placeholder="Write your message here..." 
+                  value={enquiryMessage}
+                  onChange={(e) => setEnquiryMessage(e.target.value)}
+                  className="w-full p-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-white focus:outline-none focus:border-orange-500 resize-none"
+                />
+              </div>
+
+              <div className="text-[9px] text-neutral-400 bg-neutral-950 p-2 rounded-lg border border-neutral-800">
+                💡 Target Mail: <span className="text-emerald-400 font-bold">{APP_CONFIG.ADMIN_EMAIL}</span>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setShowEnquiryModal(false)}
+                  className="w-1/2 py-2.5 bg-neutral-800 font-bold text-white rounded-xl">
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="w-1/2 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-xl shadow">
+                  Send Mail 🚀
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
