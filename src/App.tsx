@@ -77,7 +77,7 @@ export default function App() {
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/Category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -153,17 +153,12 @@ export default function App() {
         Category: item.Category || "General"
       }));
 
-  // SORTING: Push international spots (Maldives, Switzerland, Italy, etc.) down, keep Indian spots strictly on top
+  // SORTING: Keep Indian destinations at the very top
   const sourceDirectory = [...rawSourceDirectory].sort((a, b) => {
-    const foreignKeywords = ["maldives", "switzerland", "italy", "france", "dubai", "bali", "singapore", "paris"];
-    const aText = `${a.Name} ${a.State}`.toLowerCase();
-    const bText = `${b.Name} ${b.State}`.toLowerCase();
-    
-    const aIsForeign = foreignKeywords.some(kw => aText.includes(kw));
-    const bIsForeign = foreignKeywords.some(kw => bText.includes(kw));
-
-    if (!aIsForeign && bIsForeign) return -1;
-    if (aIsForeign && !bIsForeign) return 1;
+    const aIsIndia = (a.State || "").toLowerCase().includes("india") || !(a.State || "").toLowerCase().includes("maldives");
+    const bIsIndia = (b.State || "").toLowerCase().includes("india") || !(b.State || "").toLowerCase().includes("maldives");
+    if (aIsIndia && !bIsIndia) return -1;
+    if (!aIsIndia && bIsIndia) return 1;
     return 0;
   });
 
