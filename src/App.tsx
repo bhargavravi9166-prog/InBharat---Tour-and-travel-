@@ -81,14 +81,36 @@ export default function App() {
       }))
     : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
 
+  // Smart & Flexible Filter Logic
   const filteredDestinations = sourceDirectory.filter((data) => {
-    const matchesSearch = data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          data.State.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (selectedCategory === "All") return matchesSearch;
-    if (selectedCategory === "Mountains" && (data.Name.toLowerCase().includes("kedarnath") || data.State.toLowerCase().includes("uttarakhand") || data.State.toLowerCase().includes("himachal"))) return matchesSearch;
-    if (selectedCategory === "Heritage" && (data.State.toLowerCase().includes("rajasthan") || data.State.toLowerCase().includes("delhi") || data.State.toLowerCase().includes("uttar pradesh"))) return matchesSearch;
-    return matchesSearch;
+    const query = searchQuery.toLowerCase();
+    const nameStr = (data.Name || "").toLowerCase();
+    const stateStr = (data.State || "").toLowerCase();
+    const descStr = (data.history_geo_political || "").toLowerCase();
+
+    // 1. Search query match
+    const matchesSearch = nameStr.includes(query) || stateStr.includes(query);
+    if (!matchesSearch) return false;
+
+    // 2. Category matching with flexible keywords
+    if (selectedCategory === "All") return true;
+
+    if (selectedCategory === "Mountains") {
+      const keywords = ["kedarnath", "uttarakhand", "himachal", "mountain", "shrine", "temple", "peak", "himalaya"];
+      return keywords.some(kw => nameStr.includes(kw) || stateStr.includes(kw) || descStr.includes(kw));
+    }
+
+    if (selectedCategory === "Heritage") {
+      const keywords = ["rajasthan", "heritage", "palace", "fort", "history", "delhi", "agra", "jaipur"];
+      return keywords.some(kw => nameStr.includes(kw) || stateStr.includes(kw) || descStr.includes(kw));
+    }
+
+    if (selectedCategory === "Beaches") {
+      const keywords = ["goa", "kerala", "beach", "sea", "backwater", "coastal"];
+      return keywords.some(kw => nameStr.includes(kw) || stateStr.includes(kw) || descStr.includes(kw));
+    }
+
+    return true;
   });
 
   const filteredPlannerDestinations = sourceDirectory.filter((data) =>
@@ -110,14 +132,14 @@ export default function App() {
     <div className="min-h-screen bg-black text-white pb-28 font-sans select-none antialiased">
       
       {/* Top Header */}
-      <div className="bg-black/80 backdrop-blur-xl border-b border-neutral-900 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
+      <div className="bg-black/90 backdrop-blur-md border-b border-neutral-800 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
         <div>
           <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
             INDIA TOUR TRIP 🇮🇳
           </h1>
           <p className="text-[9px] text-neutral-400">indiatourtrip.in • Enterprise Suite</p>
         </div>
-        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/20">⚡ Supabase</span>
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">⚡ Supabase</span>
       </div>
 
       <div className="max-w-md mx-auto p-3 space-y-4">
@@ -132,59 +154,71 @@ export default function App() {
                 placeholder="Search destinations, forts, shrines..." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-neutral-900/90 rounded-2xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all shadow-inner"
+                className="w-full pl-10 pr-4 py-3 bg-neutral-900 rounded-2xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all"
               />
             </div>
 
-            {/* Quick Filter Pills */}
+            {/* Smart Category Filter Pills */}
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-              {['All', 'Mountains', 'Heritage', 'Beaches'].map((cat) => (
+              {[
+                { id: 'All', label: '🔥 All Places' },
+                { id: 'Mountains', label: '🏔️ Mountains' },
+                { id: 'Heritage', label: '🏛️ Heritage' },
+                { id: 'Beaches', label: '🏖️ Beaches' }
+              ].map((cat) => (
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-950/50' : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:bg-neutral-800'}`}>
-                  {cat === 'All' ? '🔥 All Places' : cat === 'Mountains' ? '🏔️ Mountains' : cat === 'Heritage' ? '🏛️ Heritage' : '🏖️ Beaches'}
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat.id ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg' : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:bg-neutral-800'}`}>
+                  {cat.label}
                 </button>
               ))}
             </div>
 
             <div className="space-y-4">
-              {filteredDestinations.map((dest, index) => (
-                <div key={index} className="bg-neutral-900/80 backdrop-blur-md rounded-3xl border border-neutral-800 overflow-hidden shadow-2xl space-y-3 pb-3 group">
-                  <div className="relative h-52 bg-neutral-950 overflow-hidden">
-                    <img 
-                      src={dest.image_url} 
-                      alt={dest.Name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                      onError={(e: any) => {
-                        e.target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/30 to-transparent"></div>
-                    <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-amber-400 font-bold border border-white/10 shadow">
-                      ☀️ {dest.weather}
+              {filteredDestinations.length > 0 ? (
+                filteredDestinations.map((dest, index) => (
+                  <div key={index} className="bg-neutral-900 rounded-3xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
+                    <div className="relative h-52 bg-neutral-950 overflow-hidden">
+                      <img 
+                        src={dest.image_url} 
+                        alt={dest.Name} 
+                        className="w-full h-full object-cover" 
+                        onError={(e: any) => {
+                          e.target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/30 to-transparent"></div>
+                      <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-amber-400 font-bold border border-neutral-800">
+                        ☀️ {dest.weather}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="px-4 space-y-2.5 text-xs">
-                    <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
-                    <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
-                    
-                    <div className="flex gap-2.5 pt-2">
-                      <button 
-                        onClick={() => setActiveCityKey(dest.Name)} 
-                        className="w-1/2 py-3 bg-neutral-800 hover:bg-neutral-700 font-bold text-white rounded-2xl border border-neutral-700 active:scale-95 transition-all">
-                        Full Guide →
-                      </button>
-                      <button 
-                        onClick={() => handleSpotHotelSearch(dest.City || dest.Name)} 
-                        className="w-1/2 py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-2xl shadow-lg shadow-orange-950/50 active:scale-95 transition-all flex items-center justify-center gap-1.5">
-                        🏨 Find Hotels
-                      </button>
+                    <div className="px-4 space-y-2 text-xs">
+                      <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
+                      <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
+                      
+                      <div className="flex gap-2.5 pt-2">
+                        <button 
+                          onClick={() => setActiveCityKey(dest.Name)} 
+                          className="w-1/2 py-3 bg-neutral-800 font-bold text-white rounded-2xl active:scale-95 transition-transform">
+                          Full Guide →
+                        </button>
+                        <button 
+                          onClick={() => handleSpotHotelSearch(dest.City || dest.Name)} 
+                          className="w-1/2 py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1">
+                          🏨 Find Hotels
+                        </button>
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-neutral-400 text-xs bg-neutral-900/50 rounded-3xl border border-neutral-800 p-6 space-y-2">
+                  <p className="text-sm font-bold text-orange-400">🔍 No destinations found</p>
+                  <p>Try selecting "All Places" or searching with a broader keyword.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
@@ -205,7 +239,7 @@ export default function App() {
                 />
               </div>
 
-              <div className="space-y-1.5 max-h-40 overflow-y-auto no-scrollbar">
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
                 {filteredPlannerDestinations.map((d, index) => (
                   <div 
                     key={index} 
@@ -466,12 +500,20 @@ export default function App() {
         </div>
       )}
 
-      {/* Glassmorphism Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-neutral-950/80 backdrop-blur-xl border-t border-neutral-900 py-3.5 px-8 flex justify-between items-center z-40 text-xl max-w-md mx-auto rounded-t-3xl shadow-2xl">
-        <button onClick={() => setTab('home')} className={`transition-transform ${tab === 'home' ? 'text-orange-400 scale-125' : 'text-neutral-500 hover:text-neutral-300'}`}>🏠</button>
-        <button onClick={() => setTab('planner')} className={`transition-transform ${tab === 'planner' ? 'text-orange-400 scale-125' : 'text-neutral-500 hover:text-neutral-300'}`}>🗺️</button>
-        <button onClick={() => setTab('travel')} className={`transition-transform ${tab === 'travel' ? 'text-orange-400 scale-125' : 'text-neutral-500 hover:text-neutral-300'}`}>🚗</button>
-        <button onClick={() => setTab('profile')} className={`transition-transform ${tab === 'profile' ? 'text-orange-400 scale-125' : 'text-neutral-500 hover:text-neutral-300'}`}>👤</button>
+      {/* Clean Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-neutral-950 border-t border-neutral-800 py-3 px-6 flex justify-around items-center z-40 max-w-md mx-auto rounded-t-3xl shadow-2xl">
+        <button onClick={() => setTab('home')} className={`flex flex-col items-center gap-0.5 text-xs font-bold transition-all ${tab === 'home' ? 'text-orange-400 scale-110' : 'text-neutral-500'}`}>
+          <span className="text-lg">🏠</span> Home
+        </button>
+        <button onClick={() => setTab('planner')} className={`flex flex-col items-center gap-0.5 text-xs font-bold transition-all ${tab === 'planner' ? 'text-orange-400 scale-110' : 'text-neutral-500'}`}>
+          <span className="text-lg">🗺️</span> Planner
+        </button>
+        <button onClick={() => setTab('travel')} className={`flex flex-col items-center gap-0.5 text-xs font-bold transition-all ${tab === 'travel' ? 'text-orange-400 scale-110' : 'text-neutral-500'}`}>
+          <span className="text-lg">🚗</span> Travel
+        </button>
+        <button onClick={() => setTab('profile')} className={`flex flex-col items-center gap-0.5 text-xs font-bold transition-all ${tab === 'profile' ? 'text-orange-400 scale-110' : 'text-neutral-500'}`}>
+          <span className="text-lg">👤</span> Profile
+        </button>
       </div>
 
     </div>
