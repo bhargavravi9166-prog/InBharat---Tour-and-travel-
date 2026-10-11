@@ -9,6 +9,16 @@ const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
+// Smart property extractor to handle any database column name / casing
+const getField = (obj: any, keys: string[]) => {
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== "") {
+      return obj[k];
+    }
+  }
+  return "";
+};
+
 // Smart nearby spots mapper
 const getSmartNearbySpots = (name: string, state: string) => {
   const normalized = (name || "").toLowerCase();
@@ -36,63 +46,20 @@ function IndiaTourTripLogo({ className = "w-10 h-10" }: { className?: string }) 
     >
       <title>INDIA TOUR TRIP</title>
       <g>
-        <path
-          d="M65 24 H145 L133 37 V106 H119 V67 L105 53 V106 H91 V37 Z"
-          fill="#F58220"
-        />
+        <path d="M65 24 H145 L133 37 V106 H119 V67 L105 53 V106 H91 V37 Z" fill="#F58220" />
         <path d="M83 24 Q105 7 127 24 Z" fill="#F58220" />
         <path d="M79 49 H137 V57 H79 Z M83 62 H133 V69 H83 Z" fill="#F58220" />
         <path d="M86 69 H98 V105 H86 Z M104 69 H116 V105 H104 Z M122 69 H134 V105 H122 Z" fill="#F58220" />
         <path d="M76 105 H144 V114 H76 Z" fill="#F58220" />
-
-        <path
-          d="M158 22 H185 L257 91 V22 H284 V114 H258 L185 45 V114 H158 Z"
-          fill="#3b82f6"
-        />
-
-        <path
-          d="M326 27 C309 27 296 40 296 56 C296 77 326 101 326 101 C326 101 356 77 356 56 C356 40 343 27 326 27 Z"
-          fill="#F58220"
-        />
+        <path d="M158 22 H185 L257 91 V22 H284 V114 H258 L185 45 V114 H158 Z" fill="#3b82f6" />
+        <path d="M326 27 C309 27 296 40 296 56 C296 77 326 101 326 101 C326 101 356 77 356 56 C356 40 343 27 326 27 Z" fill="#F58220" />
         <circle cx="326" cy="55" r="10" fill="#FFFFFF" />
-
-        <path
-          d="M70 127 Q187 159 318 120"
-          fill="none"
-          stroke="#F58220"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
+        <path d="M70 127 Q187 159 318 120" fill="none" stroke="#F58220" strokeWidth="5" strokeLinecap="round" />
         <path d="M305 111 L324 118 L309 132 Z" fill="#F58220" />
       </g>
-
-      <text
-        x="240"
-        y="183"
-        textAnchor="middle"
-        fill="#FFFFFF"
-        fontFamily="Arial, Helvetica, sans-serif"
-        fontSize="49"
-        fontWeight="800"
-        letterSpacing="2"
-      >
-        INDIA
-      </text>
-
+      <text x="240" y="183" textAnchor="middle" fill="#FFFFFF" fontFamily="Arial, Helvetica, sans-serif" fontSize="49" fontWeight="800" letterSpacing="2">INDIA</text>
       <path d="M74 211 H122 M358 211 H406" stroke="#F58220" strokeWidth="2.5" strokeLinecap="round" />
-
-      <text
-        x="240"
-        y="219"
-        textAnchor="middle"
-        fill="#F58220"
-        fontFamily="Arial, Helvetica, sans-serif"
-        fontSize="22"
-        fontWeight="700"
-        letterSpacing="4"
-      >
-        TOUR TRIP
-      </text>
+      <text x="240" y="219" textAnchor="middle" fill="#F58220" fontFamily="Arial, Helvetica, sans-serif" fontSize="22" fontWeight="700" letterSpacing="4">TOUR TRIP</text>
     </svg>
   );
 }
@@ -113,7 +80,7 @@ export default function App() {
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        // Updated to fetch from 'category' table as per your database structure
+        // Fetching directly from the 'category' table as requested
         const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
@@ -121,11 +88,12 @@ export default function App() {
           }
         });
         const data = await response.json();
+        console.log("Supabase Category Data Loaded:", data);
         if (Array.isArray(data) && data.length > 0) {
           setDbDestinations(data);
         }
       } catch (error) {
-        console.error('Error fetching destinations:', error);
+        console.error('Error fetching category data:', error);
       } finally {
         setTimeout(() => setIsLoading(false), 1200);
       }
@@ -162,11 +130,11 @@ export default function App() {
 
   const sourceDirectory = dbDestinations.length > 0 
     ? dbDestinations.map(item => {
-        const name = item.name || item.title || "Destination";
-        const state = item.state || item.country || "India";
-        const category = item.category || item.type || "General";
+        const name = getField(item, ['name', 'Name', 'NAME', 'title', 'Title', 'destination', 'Destination']) || "Destination";
+        const state = getField(item, ['state', 'State', 'STATE', 'country', 'Country', 'region', 'Region']) || "India";
+        const category = getField(item, ['category', 'Category', 'CATEGORY', 'type', 'Type', 'genre', 'Genre']) || "General";
         
-        const dbNearby = item.nearest_spot || item.nearby || item.nearest_spots;
+        const dbNearby = getField(item, ['nearest_spot', 'nearest_spots', 'nearby', 'Nearby', 'spots', 'Spots']);
         const finalNearby = (dbNearby && String(dbNearby).trim() !== "") 
           ? dbNearby 
           : getSmartNearbySpots(name, state);
@@ -176,12 +144,12 @@ export default function App() {
           City: name,
           State: state,
           Category: category,
-          history_geo_political: item.description || item.history || "Explore this amazing destination.",
-          image_url: item.image_url || item.image || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
-          weather: item.weather || "Pleasant",
-          budget: item.budget || "₹5,000 - ₹10,000",
-          transport_roadmap: item.transport_roadmap || "Accessible via local transit & cabs.",
-          markets_food: item.markets_food || "Local street food & handicraft markets.",
+          history_geo_political: getField(item, ['description', 'Description', 'history', 'History', 'details', 'Details']) || "Explore this amazing destination.",
+          image_url: getField(item, ['image_url', 'image', 'Image', 'img', 'photo', 'Photo']) || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
+          weather: getField(item, ['weather', 'Weather']) || "Pleasant",
+          budget: getField(item, ['budget', 'Budget']) || "₹5,000 - ₹10,000",
+          transport_roadmap: getField(item, ['transport_roadmap', 'transport', 'Transport']) || "Accessible via local transit & cabs.",
+          markets_food: getField(item, ['markets_food', 'food', 'Food']) || "Local street food & handicraft markets.",
           nearest_spot: finalNearby
         };
       })
@@ -195,7 +163,8 @@ export default function App() {
 
   const filteredDestinations = sourceDirectory.filter((data) => {
     const matchesSearch = (data.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (data.State || "").toLowerCase().includes(searchQuery.toLowerCase());
+                          (data.State || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (data.Category || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || data.Category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -230,11 +199,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-28 font-sans select-none antialiased">
-      
-      {/* Vercel Analytics Tracker Integration */}
       <Analytics />
 
-      {/* Premium Header with Custom Logo */}
+      {/* Header */}
       <div className="bg-neutral-950/90 backdrop-blur-xl border-b border-neutral-900 px-5 py-3 flex justify-between items-center sticky top-0 z-40">
         <div className="flex items-center gap-3 w-36">
           <IndiaTourTripLogo className="w-full h-auto" />
@@ -262,7 +229,7 @@ export default function App() {
               />
             </div>
 
-            {/* Category Filter Horizontal Scroll */}
+            {/* Category Filter Horizontal Scroll Pills */}
             {availableCategories.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                 {availableCategories.map((cat, idx) => (
@@ -476,7 +443,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: LEGAL & PRIVACY POLICY */}
+        {/* TAB 5: LEGAL */}
         {tab === 'legal' && (
           <div className="space-y-4 text-xs bg-neutral-900 p-4 rounded-3xl border border-neutral-800">
             <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
@@ -611,7 +578,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Clean Bottom Navigation */}
+      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-neutral-950 border-t border-neutral-800 py-3 px-6 flex justify-around items-center z-40 max-w-md mx-auto rounded-t-3xl shadow-2xl">
         <button onClick={() => setTab('home')} className={`flex flex-col items-center gap-0.5 text-xs font-bold transition-all ${tab === 'home' ? 'text-orange-400 scale-110' : 'text-neutral-500'}`}>
           <span className="text-lg">🏠</span> Home
