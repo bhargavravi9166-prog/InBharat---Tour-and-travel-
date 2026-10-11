@@ -1,4 +1,4 @@
-Import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
@@ -484,5 +484,3 @@ export default function App() {
     </div>
   );
 }
-
-
