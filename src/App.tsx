@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kd2N2dWtobHB2and4bXNraWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDg1NzAsImV4cCI6MjEwNzIyNDU3MH0.fg4qUeUD1Jq816546cqtBpMyUfeSdAvwNouLzBEjS_U";
@@ -9,20 +8,22 @@ const APP_CONFIG = {
 };
 
 export default function App() {
-  const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile' | 'legal'>('home');
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [tab, setTab] = useState<string>('home');
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
-  const [plannerSearch, setPlannerSearch] = useState("");
-  const [selectedDestKey, setSelectedDestKey] = useState("kedarnath");
+  const [plannerSearch, setPlannerSearch] = useState<string>("");
+  const [selectedDestKey, setSelectedDestKey] = useState<string>("kedarnath");
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
   const [dbDestinations, setDbDestinations] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchDestinations() {
+    async function initApp() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/destinations?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -34,14 +35,18 @@ export default function App() {
         }
       } catch (error) {
         console.error('Error fetching destinations:', error);
+      } finally {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1500);
       }
     }
-    fetchDestinations();
+    initApp();
   }, []);
 
-  const [showEnquiryModal, setShowEnquiryModal] = useState(false);
-  const [enquiryName, setEnquiryName] = useState("");
-  const [enquiryMessage, setEnquiryMessage] = useState("");
+  const [showEnquiryModal, setShowEnquiryModal] = useState<boolean>(false);
+  const [enquiryName, setEnquiryName] = useState<string>("");
+  const [enquiryMessage, setEnquiryMessage] = useState<string>("");
 
   const handleDirectMailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,37 +62,46 @@ export default function App() {
     setEnquiryMessage("");
   };
 
-  const [trainFrom, setTrainFrom] = useState("");
-  const [trainTo, setTrainTo] = useState("");
+  const [trainFrom, setTrainFrom] = useState<string>("");
+  const [trainTo, setTrainTo] = useState<string>("");
 
-  const [hotelCity, setHotelCity] = useState("");
+  const [hotelCity, setHotelCity] = useState<string>("");
   const [hotelResults, setHotelResults] = useState<any[] | null>(null);
 
-  const [navSource, setNavSource] = useState("");
-  const [navDestination, setNavDestination] = useState("");
+  const [navSource, setNavSource] = useState<string>("");
+  const [navDestination, setNavDestination] = useState<string>("");
 
-  const sourceDirectory = dbDestinations.length > 0 
-    ? dbDestinations.map(item => ({
-        Name: item.name,
-        City: item.name,
-        State: item.state,
-        history_geo_political: item.description,
-        image_url: item.image_url,
-        weather: "Live from Supabase",
-        budget: "Flexible",
-        transport_roadmap: "Available via App Navigation",
-        markets_food: "Local Delicacies"
-      }))
-    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
+  const sourceDirectory = dbDestinations.map((item: any) => ({
+    Name: item.name || "Destination",
+    City: item.name || "City",
+    State: item.state || "State",
+    history_geo_political: item.description || "Explore this amazing destination across India.",
+    image_url: item.image_url || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
+    weather: item.weather || "Live from Supabase",
+    budget: item.budget || "Flexible",
+    transport_roadmap: item.transport_roadmap || "Available via App Navigation",
+    markets_food: item.markets_food || "Local Delicacies",
+    category: item.category || "Heritage",
+    nearest_spot: item.nearest_spot || "Local Viewpoints & Markets"
+  }));
 
-  const filteredDestinations = sourceDirectory.filter((data) =>
-    data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    data.State.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDestinations = sourceDirectory.filter((data: any) => {
+    const matchesSearch = (data.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (data.State || "").toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const itemCat = (data.category || "").toLowerCase();
+    const targetCat = selectedCategory.toLowerCase();
+    
+    const matchesCategory = selectedCategory === "All" || 
+                            itemCat.includes(targetCat) || 
+                            targetCat.split(' ').some(word => itemCat.includes(word));
+    
+    return matchesSearch && matchesCategory;
+  });
 
-  const filteredPlannerDestinations = sourceDirectory.filter((data) =>
-    data.Name.toLowerCase().includes(plannerSearch.toLowerCase()) ||
-    data.State.toLowerCase().includes(plannerSearch.toLowerCase())
+  const filteredPlannerDestinations = sourceDirectory.filter((data: any) =>
+    (data.Name || "").toLowerCase().includes(plannerSearch.toLowerCase()) ||
+    (data.State || "").toLowerCase().includes(plannerSearch.toLowerCase())
   );
 
   const handleSpotHotelSearch = (cityName: string) => {
@@ -99,6 +113,25 @@ export default function App() {
     setActiveCityKey(null);
     setTab('travel');
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center space-y-4 font-sans select-none">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-orange-500 via-amber-500 to-rose-500 flex items-center justify-center text-4xl shadow-2xl shadow-orange-950 animate-bounce">
+          ✈️
+        </div>
+        <div className="text-center space-y-1">
+          <h1 className="font-black text-lg tracking-widest bg-gradient-to-r from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent">
+            INDIA TOUR TRIP
+          </h1>
+          <p className="text-xs text-orange-400 font-semibold tracking-wider">indiatourtrip.in</p>
+        </div>
+        <div className="w-32 h-1 bg-neutral-900 rounded-full overflow-hidden mt-2">
+          <div className="w-full h-full bg-gradient-to-r from-orange-500 to-amber-500 animate-[pulse_1s_infinite]"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white pb-28 font-sans select-none antialiased">
@@ -128,7 +161,7 @@ export default function App() {
         {/* TAB 1: HOME */}
         {tab === 'home' && (
           <div className="space-y-5">
-            {/* Enhanced Search Bar placed with proper spacing */}
+            {/* Enhanced Search Bar */}
             <div className="relative pt-1">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 pt-1 text-neutral-400 text-sm">🔍</span>
               <input 
@@ -140,9 +173,26 @@ export default function App() {
               />
             </div>
 
+            {/* Category Filter Buttons */}
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+              {['All', 'Heritage', 'Spiritual', 'Honeymoon', 'Hill Station', 'Beach', 'Wildlife Sanctuary'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                    selectedCategory === cat 
+                      ? 'bg-orange-500 text-white border-orange-400 shadow-lg shadow-orange-950/50' 
+                      : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:bg-neutral-800'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             <div className="space-y-5">
               {filteredDestinations.length > 0 ? (
-                filteredDestinations.map((dest, index) => (
+                filteredDestinations.map((dest: any, index: number) => (
                   <div key={index} className="bg-neutral-900/90 rounded-3xl border border-neutral-800 overflow-hidden shadow-2xl space-y-3 pb-4">
                     <div className="relative h-52 bg-neutral-950 overflow-hidden">
                       <img 
@@ -163,6 +213,12 @@ export default function App() {
                       <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
                       <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                       
+                      {/* Nearest Spot Tag */}
+                      <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 text-[11px] flex items-center gap-2">
+                        <span className="text-orange-400 font-bold">📍 Nearest Spot:</span>
+                        <span className="text-neutral-300 truncate">{dest.nearest_spot}</span>
+                      </div>
+
                       <div className="flex gap-2.5 pt-2">
                         <button 
                           onClick={() => setActiveCityKey(dest.Name)} 
@@ -181,7 +237,7 @@ export default function App() {
               ) : (
                 <div className="text-center py-12 text-neutral-400 text-xs bg-neutral-900/50 rounded-3xl border border-neutral-800 p-6 space-y-2">
                   <p className="text-sm font-bold text-orange-400">🔍 No destinations found</p>
-                  <p>Try searching with a different keyword.</p>
+                  <p>Try searching with a different keyword or category.</p>
                 </div>
               )}
             </div>
@@ -205,7 +261,7 @@ export default function App() {
               </div>
 
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {filteredPlannerDestinations.map((d, index) => (
+                {filteredPlannerDestinations.map((d: any, index: number) => (
                   <div 
                     key={index} 
                     onClick={() => { setSelectedDestKey(d.Name); setPlannerSearch(d.Name); setGeneratedItinerary(d); }}
@@ -218,7 +274,7 @@ export default function App() {
 
               <button 
                 onClick={() => {
-                  const found = sourceDirectory.find(d => d.Name === selectedDestKey) || sourceDirectory[0];
+                  const found = sourceDirectory.find((d: any) => d.Name === selectedDestKey) || sourceDirectory[0];
                   setGeneratedItinerary(found);
                 }}
                 className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-2xl shadow-lg active:scale-95 transition-transform">
@@ -252,7 +308,7 @@ export default function App() {
               <h2 className="font-bold text-sm text-amber-400">🏨 Hotel Booking (Affiliate Ready)</h2>
               <input type="text" placeholder="Enter City or Spot" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} className="w-full p-3 bg-neutral-950 rounded-2xl border border-neutral-800 text-white"/>
               <button onClick={() => setHotelResults([{ id: 1, name: `${hotelCity || 'Local'} Heritage Palace`, price: "₹3,499 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }, { id: 2, name: `${hotelCity || 'Local'} Luxury Stay`, price: "₹4,899 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }])} className="w-full py-3 bg-orange-500 font-bold text-white rounded-2xl">Search Hotels</button>
-              {hotelResults && hotelResults.map(h => (
+              {hotelResults && hotelResults.map((h: any) => (
                 <div key={h.id} className="bg-neutral-950 p-3 rounded-2xl flex justify-between items-center border border-neutral-800">
                   <div>
                     <p className="font-bold text-white">{h.name}</p>
@@ -371,35 +427,35 @@ export default function App() {
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-3xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-              <h3 className="font-bold text-sm text-orange-400">{sourceDirectory.find(d => d.Name === activeCityKey)?.Name}</h3>
+              <h3 className="font-bold text-sm text-orange-400">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.Name}</h3>
               <button onClick={() => setActiveCityKey(null)} className="text-neutral-400 font-bold text-base">✕</button>
             </div>
 
-            <p className="text-neutral-300 leading-relaxed">{sourceDirectory.find(d => d.Name === activeCityKey)?.history_geo_political}</p>
+            <p className="text-neutral-300 leading-relaxed">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.history_geo_political}</p>
             
             <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 space-y-1">
               <p className="text-amber-400 font-bold">☀️ Weather & Climate:</p>
-              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.weather}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.weather}</p>
             </div>
 
             <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 space-y-1">
               <p className="text-amber-400 font-bold">🛍️ Markets & Local Food:</p>
-              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.markets_food}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.markets_food}</p>
             </div>
 
             <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 space-y-1">
               <p className="text-orange-400 font-bold">🚗 Transport Roadmap:</p>
-              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.transport_roadmap}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.transport_roadmap}</p>
             </div>
 
             <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 space-y-1">
               <p className="text-rose-400 font-bold">💰 Estimated Budget:</p>
-              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.budget}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.budget}</p>
             </div>
 
             <button 
               onClick={() => {
-                const found = sourceDirectory.find(d => d.Name === activeCityKey);
+                const found = sourceDirectory.find((d: any) => d.Name === activeCityKey);
                 handleSpotHotelSearch(found?.City || found?.Name || "Destination");
               }}
               className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
