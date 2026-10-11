@@ -20,7 +20,6 @@ export default function App() {
 
   const [dbDestinations, setDbDestinations] = useState<any[]>([]);
 
-  // Fetching and syncing with Supabase
   useEffect(() => {
     async function fetchDestinationsFromSupabase() {
       try {
@@ -35,7 +34,7 @@ export default function App() {
           setDbDestinations(data);
         }
       } catch (error) {
-        console.error('Error fetching from Supabase, using local sync:', error);
+        console.error('Error fetching from Supabase:', error);
       }
     }
     fetchDestinationsFromSupabase();
@@ -68,7 +67,6 @@ export default function App() {
   const [navSource, setNavSource] = useState<string>("");
   const [navDestination, setNavDestination] = useState<string>("");
 
-  // Syncing Supabase data with tourismdata.ts fallback structure
   const sourceDirectory = dbDestinations.length > 0 
     ? dbDestinations.map((item: any) => ({
         Name: item.name || item.Name || "Destination",
@@ -91,8 +89,12 @@ export default function App() {
     const matchesSearch = (data.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (data.State || "").toLowerCase().includes(searchQuery.toLowerCase());
     
+    // Highly flexible category matching
+    const itemCat = (data.category || "").toLowerCase();
+    const targetCat = selectedCategory.toLowerCase();
     const matchesCategory = selectedCategory === "All" || 
-                            ((data.category || "").toLowerCase().includes(selectedCategory.toLowerCase()));
+                            itemCat.includes(targetCat) || 
+                            targetCat.split(' ').some(word => itemCat.includes(word));
     
     return matchesSearch && matchesCategory;
   });
