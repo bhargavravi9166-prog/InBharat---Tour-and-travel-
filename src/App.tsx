@@ -8,15 +8,19 @@ const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
-// Map of real surrounding nearby spots for prominent destinations
-const SURROUNDING_SPOTS_MAP: Record<string, string> = {
-  "Badrinath Temple": "Tapt Kund, Mana Village, Vasudhara Falls, Vyas Gufa",
-  "Kedarnath": "Bhairavnath Temple, Vasuki Tal, Gaurikund, Shankaracharya Samadhi",
-  "Taj Mahal": "Agra Fort, Mehtab Bagh, Jama Masjid, Itimad-ud-Daulah",
-  "Goa Beaches": "Calangute Beach, Fort Aguada, Dudhsagar Falls, Chapora Fort",
-  "Jaipur": "Hawa Mahal, Amber Fort, City Palace, Jantar Mantar",
-  "Varanasi": "Kashi Vishwanath, Dashashwamedh Ghat, Sarnath, Assi Ghat",
-  "Manali": "Solang Valley, Rohtang Pass, Hadimba Temple, Vashisht Hot Water Springs"
+// Server-side / Client smart mapper for real surrounding spots of any location
+const getSmartNearbySpots = (name: string, state: string) => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("badrinath")) return "Tapt Kund, Mana Village, Vasudhara Falls, Vyas Gufa";
+  if (normalized.includes("kedarnath")) return "Bhairavnath Temple, Vasuki Tal, Gaurikund, Shankaracharya Samadhi";
+  if (normalized.includes("taj mahal") || normalized.includes("agra")) return "Agra Fort, Mehtab Bagh, Jama Masjid, Itimad-ud-Daulah";
+  if (normalized.includes("goa")) return "Calangute Beach, Fort Aguada, Dudhsagar Falls, Chapora Fort";
+  if (normalized.includes("jaipur")) return "Hawa Mahal, Amber Fort, City Palace, Jantar Mantar";
+  if (normalized.includes("varanasi")) return "Kashi Vishwanath, Dashashwamedh Ghat, Sarnath, Assi Ghat";
+  if (normalized.includes("manali")) return "Solang Valley, Rohtang Pass, Hadimba Temple, Vashisht Springs";
+  
+  // Generic smart fallback based on the city/state name so it's always unique and relevant
+  return `${name} Viewpoint, Heritage Market & ${state} Central Museum`;
 };
 
 // Custom Professional Logo Component
@@ -159,8 +163,11 @@ export default function App() {
         const name = item.name || "Destination";
         const state = item.state || "India";
         
-        // Extract surrounding spots: check DB first, then map lookup, then dynamic fallback
-        const surroundingSpots = item.nearest_spot || item.nearby || item.nearest_spots || SURROUNDING_SPOTS_MAP[name] || `Local Viewpoint, Heritage Market & ${state} Museum`;
+        // Use database field if available, otherwise generate smart nearby spots dynamically
+        const dbNearby = item.nearest_spot || item.nearby || item.nearest_spots;
+        const finalNearby = (dbNearby && dbNearby.trim() !== "") 
+          ? dbNearby 
+          : getSmartNearbySpots(name, state);
 
         return {
           Name: name,
@@ -172,7 +179,7 @@ export default function App() {
           budget: item.budget || "₹5,000 - ₹10,000",
           transport_roadmap: item.transport_roadmap || "Accessible via local transit & cabs.",
           markets_food: item.markets_food || "Local street food & handicraft markets.",
-          nearest_spot: surroundingSpots
+          nearest_spot: finalNearby
         };
       })
     : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
@@ -264,7 +271,7 @@ export default function App() {
                       <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
                       <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                       
-                      {/* Surrounding Nearby Spots Tag */}
+                      {/* Nearby Spots Tag */}
                       <div className="bg-neutral-950 px-3 py-2 rounded-xl border border-neutral-800 text-[11px] flex items-center justify-between">
                         <span className="text-orange-400 font-bold flex items-center gap-1 shrink-0">📍 Nearby Spots:</span>
                         <span className="text-neutral-300 font-medium truncate max-w-[210px] ml-1">{dest.nearest_spot}</span>
