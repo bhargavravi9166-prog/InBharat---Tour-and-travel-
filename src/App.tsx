@@ -9,16 +9,16 @@ const APP_CONFIG = {
 };
 
 export default function App() {
-  const [tab, setTab] = useState('home');
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [activeCityKey, setActiveCityKey] = useState(null);
+  const [tab, setTab] = useState<string>('home');
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
-  const [plannerSearch, setPlannerSearch] = useState("");
-  const [selectedDestKey, setSelectedDestKey] = useState("kedarnath");
-  const [generatedItinerary, setGeneratedItinerary] = useState(null);
+  const [plannerSearch, setPlannerSearch] = useState<string>("");
+  const [selectedDestKey, setSelectedDestKey] = useState<string>("kedarnath");
+  const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
 
-  const [dbDestinations, setDbDestinations] = useState([]);
+  const [dbDestinations, setDbDestinations] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchDestinationsFromSupabase() {
@@ -40,11 +40,11 @@ export default function App() {
     fetchDestinationsFromSupabase();
   }, []);
 
-  const [showEnquiryModal, setShowEnquiryModal] = useState(false);
-  const [enquiryName, setEnquiryName] = useState("");
-  const [enquiryMessage, setEnquiryMessage] = useState("");
+  const [showEnquiryModal, setShowEnquiryModal] = useState<boolean>(false);
+  const [enquiryName, setEnquiryName] = useState<string>("");
+  const [enquiryMessage, setEnquiryMessage] = useState<string>("");
 
-  const handleDirectMailSubmit = (e) => {
+  const handleDirectMailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!enquiryName || !enquiryMessage) {
       alert("Please fill in both your name and message!");
@@ -58,17 +58,17 @@ export default function App() {
     setEnquiryMessage("");
   };
 
-  const [trainFrom, setTrainFrom] = useState("");
-  const [trainTo, setTrainTo] = useState("");
+  const [trainFrom, setTrainFrom] = useState<string>("");
+  const [trainTo, setTrainTo] = useState<string>("");
 
-  const [hotelCity, setHotelCity] = useState("");
-  const [hotelResults, setHotelResults] = useState(null);
+  const [hotelCity, setHotelCity] = useState<string>("");
+  const [hotelResults, setHotelResults] = useState<any[] | null>(null);
 
-  const [navSource, setNavSource] = useState("");
-  const [navDestination, setNavDestination] = useState("");
+  const [navSource, setNavSource] = useState<string>("");
+  const [navDestination, setNavDestination] = useState<string>("");
 
   const sourceDirectory = dbDestinations.length > 0 
-    ? dbDestinations.map(item => ({
+    ? dbDestinations.map((item: any) => ({
         Name: item.name,
         City: item.name,
         State: item.state,
@@ -80,12 +80,12 @@ export default function App() {
         markets_food: item.markets_food || "Local Delicacies",
         category: item.category || "Heritage"
       }))
-    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map(item => ({
+    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map((item: any) => ({
         ...item,
         category: item.category || "Heritage"
       }));
 
-  const filteredDestinations = sourceDirectory.filter((data) => {
+  const filteredDestinations = sourceDirectory.filter((data: any) => {
     const matchesSearch = data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           data.State.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -95,12 +95,12 @@ export default function App() {
     return matchesSearch && matchesCategory;
   });
 
-  const filteredPlannerDestinations = sourceDirectory.filter((data) =>
+  const filteredPlannerDestinations = sourceDirectory.filter((data: any) =>
     data.Name.toLowerCase().includes(plannerSearch.toLowerCase()) ||
     data.State.toLowerCase().includes(plannerSearch.toLowerCase())
   );
 
-  const handleSpotHotelSearch = (cityName) => {
+  const handleSpotHotelSearch = (cityName: string) => {
     setHotelCity(cityName);
     setHotelResults([
       { id: 1, name: `${cityName} Heritage Stay`, price: "₹2,499 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" },
@@ -169,14 +169,14 @@ export default function App() {
 
             <div className="space-y-5">
               {filteredDestinations.length > 0 ? (
-                filteredDestinations.map((dest, index) => (
+                filteredDestinations.map((dest: any, index: number) => (
                   <div key={index} className="bg-neutral-900/90 rounded-3xl border border-neutral-800 overflow-hidden shadow-2xl space-y-3 pb-4">
                     <div className="relative h-52 bg-neutral-950 overflow-hidden">
                       <img 
                         src={dest.image_url} 
                         alt={dest.Name} 
                         className="w-full h-full object-cover" 
-                        onError={(e) => {
+                        onError={(e: any) => {
                           e.target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
                         }}
                       />
@@ -232,7 +232,7 @@ export default function App() {
               </div>
 
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {filteredPlannerDestinations.map((d, index) => (
+                {filteredPlannerDestinations.map((d: any, index: number) => (
                   <div 
                     key={index} 
                     onClick={() => { setSelectedDestKey(d.Name); setPlannerSearch(d.Name); setGeneratedItinerary(d); }}
@@ -245,7 +245,7 @@ export default function App() {
 
               <button 
                 onClick={() => {
-                  const found = sourceDirectory.find(d => d.Name === selectedDestKey) || sourceDirectory[0];
+                  const found = sourceDirectory.find((d: any) => d.Name === selectedDestKey) || sourceDirectory[0];
                   setGeneratedItinerary(found);
                 }}
                 className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-2xl shadow-lg active:scale-95 transition-transform">
@@ -279,7 +279,7 @@ export default function App() {
               <h2 className="font-bold text-sm text-amber-400">🏨 Hotel Booking (Affiliate Ready)</h2>
               <input type="text" placeholder="Enter City or Spot" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} className="w-full p-3 bg-neutral-950 rounded-2xl border border-neutral-800 text-white"/>
               <button onClick={() => setHotelResults([{ id: 1, name: `${hotelCity || 'Local'} Heritage Palace`, price: "₹3,499 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }, { id: 2, name: `${hotelCity || 'Local'} Luxury Stay`, price: "₹4,899 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }])} className="w-full py-3 bg-orange-500 font-bold text-white rounded-2xl">Search Hotels</button>
-              {hotelResults && hotelResults.map(h => (
+              {hotelResults && hotelResults.map((h: any) => (
                 <div key={h.id} className="bg-neutral-950 p-3 rounded-2xl flex justify-between items-center border border-neutral-800">
                   <div>
                     <p className="font-bold text-white">{h.name}</p>
@@ -398,35 +398,35 @@ export default function App() {
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-3xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
-              <h3 className="font-bold text-sm text-orange-400">{sourceDirectory.find(d => d.Name === activeCityKey)?.Name}</h3>
+              <h3 className="font-bold text-sm text-orange-400">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.Name}</h3>
               <button onClick={() => setActiveCityKey(null)} className="text-neutral-400 font-bold text-base">✕</button>
             </div>
 
-            <p className="text-neutral-300 leading-relaxed">{sourceDirectory.find(d => d.Name === activeCityKey)?.history_geo_political}</p>
+            <p className="text-neutral-300 leading-relaxed">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.history_geo_political}</p>
             
             <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 space-y-1">
               <p className="text-amber-400 font-bold">☀️ Weather & Climate:</p>
-              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.weather}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.weather}</p>
             </div>
 
             <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 space-y-1">
               <p className="text-amber-400 font-bold">🛍️ Markets & Local Food:</p>
-              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.markets_food}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.markets_food}</p>
             </div>
 
             <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 space-y-1">
               <p className="text-orange-400 font-bold">🚗 Transport Roadmap:</p>
-              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.transport_roadmap}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.transport_roadmap}</p>
             </div>
 
             <div className="bg-neutral-950 p-3 rounded-2xl border border-neutral-800 space-y-1">
               <p className="text-rose-400 font-bold">💰 Estimated Budget:</p>
-              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find(d => d.Name === activeCityKey)?.budget}</p>
+              <p className="text-neutral-300 text-[11px]">{sourceDirectory.find((d: any) => d.Name === activeCityKey)?.budget}</p>
             </div>
 
             <button 
               onClick={() => {
-                const found = sourceDirectory.find(d => d.Name === activeCityKey);
+                const found = sourceDirectory.find((d: any) => d.Name === activeCityKey);
                 handleSpotHotelSearch(found?.City || found?.Name || "Destination");
               }}
               className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
