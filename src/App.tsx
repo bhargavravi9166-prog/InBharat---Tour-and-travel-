@@ -8,7 +8,82 @@ const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
+// Custom Professional Logo Component
+function IndiaTourTripLogo({ className = "w-10 h-10" }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 480 250"
+      className={className}
+      role="img"
+      aria-label="INDIA TOUR TRIP travel portal logo"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <title>INDIA TOUR TRIP</title>
+      <g>
+        <path
+          d="M65 24 H145 L133 37 V106 H119 V67 L105 53 V106 H91 V37 Z"
+          fill="#F58220"
+        />
+        <path d="M83 24 Q105 7 127 24 Z" fill="#F58220" />
+        <path d="M79 49 H137 V57 H79 Z M83 62 H133 V69 H83 Z" fill="#F58220" />
+        <path d="M86 69 H98 V105 H86 Z M104 69 H116 V105 H104 Z M122 69 H134 V105 H122 Z" fill="#F58220" />
+        <path d="M76 105 H144 V114 H76 Z" fill="#F58220" />
+
+        <path
+          d="M158 22 H185 L257 91 V22 H284 V114 H258 L185 45 V114 H158 Z"
+          fill="#3b82f6"
+        />
+
+        <path
+          d="M326 27 C309 27 296 40 296 56 C296 77 326 101 326 101 C326 101 356 77 356 56 C356 40 343 27 326 27 Z"
+          fill="#F58220"
+        />
+        <circle cx="326" cy="55" r="10" fill="#FFFFFF" />
+
+        <path
+          d="M70 127 Q187 159 318 120"
+          fill="none"
+          stroke="#F58220"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path d="M305 111 L324 118 L309 132 Z" fill="#F58220" />
+      </g>
+
+      <text
+        x="240"
+        y="183"
+        textAnchor="middle"
+        fill="#FFFFFF"
+        fontFamily="Arial, Helvetica, sans-serif"
+        fontSize="49"
+        fontWeight="800"
+        letterSpacing="2"
+      >
+        INDIA
+      </text>
+
+      <path d="M74 211 H122 M358 211 H406" stroke="#F58220" strokeWidth="2.5" strokeLinecap="round" />
+
+      <text
+        x="240"
+        y="219"
+        textAnchor="middle"
+        fill="#F58220"
+        fontFamily="Arial, Helvetica, sans-serif"
+        fontSize="22"
+        fontWeight="700"
+        letterSpacing="4"
+      >
+        TOUR TRIP
+      </text>
+    </svg>
+  );
+}
+
 export default function App() {
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile' | 'legal'>('home');
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
@@ -34,6 +109,8 @@ export default function App() {
         }
       } catch (error) {
         console.error('Error fetching destinations:', error);
+      } finally {
+        setTimeout(() => setIsLoading(false), 1200);
       }
     }
     fetchDestinations();
@@ -73,10 +150,11 @@ export default function App() {
         State: item.state,
         history_geo_political: item.description,
         image_url: item.image_url,
-        weather: "Live from Supabase",
-        budget: "Flexible",
-        transport_roadmap: "Available via App Navigation",
-        markets_food: "Local Delicacies"
+        weather: item.weather || "Live from Supabase",
+        budget: item.budget || "Flexible",
+        transport_roadmap: item.transport_roadmap || "Available via App Navigation",
+        markets_food: item.markets_food || "Local Delicacies",
+        nearest_spot: item.nearest_spot || "Local Viewpoints & Markets"
       }))
     : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
 
@@ -100,21 +178,26 @@ export default function App() {
     setTab('travel');
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center space-y-6 font-sans select-none p-4">
+        <div className="w-56 animate-bounce">
+          <IndiaTourTripLogo className="w-full h-auto drop-shadow-2xl" />
+        </div>
+        <div className="w-32 h-1 bg-neutral-900 rounded-full overflow-hidden">
+          <div className="w-full h-full bg-gradient-to-r from-orange-500 to-amber-500 animate-[pulse_1s_infinite]"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white pb-28 font-sans select-none antialiased">
       
-      {/* Premium Header with Logo & Domain */}
-      <div className="bg-neutral-950/90 backdrop-blur-xl border-b border-neutral-900 px-5 py-4 flex justify-between items-center sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 via-amber-500 to-rose-500 flex items-center justify-center font-black text-lg text-white shadow-lg shadow-orange-950/50">
-            ✈️
-          </div>
-          <div>
-            <h1 className="font-black text-sm tracking-wide bg-gradient-to-r from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent">
-              INDIA TOUR TRIP
-            </h1>
-            <p className="text-[10px] text-orange-400 font-semibold tracking-wider">indiatourtrip.in</p>
-          </div>
+      {/* Premium Header with Custom Logo */}
+      <div className="bg-neutral-950/90 backdrop-blur-xl border-b border-neutral-900 px-5 py-3 flex justify-between items-center sticky top-0 z-40">
+        <div className="flex items-center gap-3 w-36">
+          <IndiaTourTripLogo className="w-full h-auto" />
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1.5 rounded-full border border-emerald-500/20 flex items-center gap-1 shadow-sm">
@@ -128,7 +211,6 @@ export default function App() {
         {/* TAB 1: HOME */}
         {tab === 'home' && (
           <div className="space-y-5">
-            {/* Enhanced Search Bar placed with proper spacing */}
             <div className="relative pt-1">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 pt-1 text-neutral-400 text-sm">🔍</span>
               <input 
@@ -163,6 +245,11 @@ export default function App() {
                       <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
                       <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                       
+                      <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 text-[11px] flex items-center gap-2">
+                        <span className="text-orange-400 font-bold">📍 Nearest Spot:</span>
+                        <span className="text-neutral-300 truncate">{dest.nearest_spot}</span>
+                      </div>
+
                       <div className="flex gap-2.5 pt-2">
                         <button 
                           onClick={() => setActiveCityKey(dest.Name)} 
