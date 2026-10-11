@@ -21,9 +21,9 @@ export default function App() {
   const [dbDestinations, setDbDestinations] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchDestinations() {
+    async function fetchDestinationsFromSupabase() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/Category?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -37,7 +37,7 @@ export default function App() {
         console.error('Error fetching destinations:', error);
       }
     }
-    fetchDestinations();
+    fetchDestinationsFromSupabase();
   }, []);
 
   const [showEnquiryModal, setShowEnquiryModal] = useState(false);
@@ -78,17 +78,21 @@ export default function App() {
         budget: item.budget || "Flexible",
         transport_roadmap: item.transport_roadmap || "Available via App Navigation",
         markets_food: item.markets_food || "Local Delicacies",
-        category: item.category || "General"
+        category: item.category || "Heritage"
       }))
-    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map(item => ({
+    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map((item: any) => ({
         ...item,
-        category: "General"
+        category: item.category || "Heritage"
       }));
 
   const filteredDestinations = sourceDirectory.filter((data) => {
     const matchesSearch = data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           data.State.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || (data.category && data.category.toLowerCase() === selectedCategory.toLowerCase());
+    
+    // Flexible filtering using includes to support composite category names and exact database names
+    const matchesCategory = selectedCategory === "All" || 
+                            (data.category && data.category.toLowerCase().includes(selectedCategory.toLowerCase()));
+    
     return matchesSearch && matchesCategory;
   });
 
@@ -147,9 +151,9 @@ export default function App() {
               />
             </div>
 
-            {/* Category Filter Buttons placed right below Search Bar */}
+            {/* Category Filter Buttons including Wildlife Sanctuary */}
             <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
-              {['All', 'Heritage', 'Spiritual', 'Honeymoon', 'Hill Station', 'Beach', 'Wildlife'].map((cat) => (
+              {['All', 'Heritage', 'Spiritual', 'Honeymoon', 'Hill Station', 'Beach', 'Wildlife Sanctuary'].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
