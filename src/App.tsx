@@ -8,6 +8,17 @@ const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
+// Map of real surrounding nearby spots for prominent destinations
+const SURROUNDING_SPOTS_MAP: Record<string, string> = {
+  "Badrinath Temple": "Tapt Kund, Mana Village, Vasudhara Falls, Vyas Gufa",
+  "Kedarnath": "Bhairavnath Temple, Vasuki Tal, Gaurikund, Shankaracharya Samadhi",
+  "Taj Mahal": "Agra Fort, Mehtab Bagh, Jama Masjid, Itimad-ud-Daulah",
+  "Goa Beaches": "Calangute Beach, Fort Aguada, Dudhsagar Falls, Chapora Fort",
+  "Jaipur": "Hawa Mahal, Amber Fort, City Palace, Jantar Mantar",
+  "Varanasi": "Kashi Vishwanath, Dashashwamedh Ghat, Sarnath, Assi Ghat",
+  "Manali": "Solang Valley, Rohtang Pass, Hadimba Temple, Vashisht Hot Water Springs"
+};
+
 // Custom Professional Logo Component
 function IndiaTourTripLogo({ className = "w-10 h-10" }: { className?: string }) {
   return (
@@ -147,6 +158,10 @@ export default function App() {
     ? dbDestinations.map(item => {
         const name = item.name || "Destination";
         const state = item.state || "India";
+        
+        // Extract surrounding spots: check DB first, then map lookup, then dynamic fallback
+        const surroundingSpots = item.nearest_spot || item.nearby || item.nearest_spots || SURROUNDING_SPOTS_MAP[name] || `Local Viewpoint, Heritage Market & ${state} Museum`;
+
         return {
           Name: name,
           City: name,
@@ -157,8 +172,7 @@ export default function App() {
           budget: item.budget || "₹5,000 - ₹10,000",
           transport_roadmap: item.transport_roadmap || "Accessible via local transit & cabs.",
           markets_food: item.markets_food || "Local street food & handicraft markets.",
-          // Direct fallback ensuring data is never empty
-          nearest_spot: item.nearest_spot || item.nearby || item.nearest_spots || `${name} Viewpoint & Central Market`
+          nearest_spot: surroundingSpots
         };
       })
     : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
@@ -250,12 +264,10 @@ export default function App() {
                       <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
                       <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                       
-                      {/* Nearest Spot Tag with guaranteed fallback rendering */}
+                      {/* Surrounding Nearby Spots Tag */}
                       <div className="bg-neutral-950 px-3 py-2 rounded-xl border border-neutral-800 text-[11px] flex items-center justify-between">
-                        <span className="text-orange-400 font-bold flex items-center gap-1">📍 Nearest Spot:</span>
-                        <span className="text-neutral-300 font-medium truncate max-w-[200px]">
-                          {dest.nearest_spot && dest.nearest_spot.trim() !== "" ? dest.nearest_spot : `${dest.Name} Viewpoint & Local Market`}
-                        </span>
+                        <span className="text-orange-400 font-bold flex items-center gap-1 shrink-0">📍 Nearby Spots:</span>
+                        <span className="text-neutral-300 font-medium truncate max-w-[210px] ml-1">{dest.nearest_spot}</span>
                       </div>
 
                       <div className="flex gap-2.5 pt-2">
