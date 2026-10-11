@@ -77,13 +77,15 @@ export default function App() {
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/Category?select=*`, {
+        // Corrected table name to lowercase 'category'
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
           }
         });
         const data = await response.json();
+        console.log("Supabase Category Data Loaded:", data);
         if (Array.isArray(data) && data.length > 0) {
           setDbDestinations(data);
         }
@@ -153,7 +155,7 @@ export default function App() {
         Category: item.Category || "General"
       }));
 
-  // SORTING: Keep Indian destinations at the very top
+  // SORTING: Keeping Indian destinations strictly at the top
   const sourceDirectory = [...rawSourceDirectory].sort((a, b) => {
     const aIsIndia = (a.State || "").toLowerCase().includes("india") || !(a.State || "").toLowerCase().includes("maldives");
     const bIsIndia = (b.State || "").toLowerCase().includes("india") || !(b.State || "").toLowerCase().includes("maldives");
