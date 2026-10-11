@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kd2N2dWtobHB2and4bXNraWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDg1NzAsImV4cCI6MjEwNzIyNDU3MH0.fg4qUeUD1Jq816546cqtBpMyUfeSdAvwNouLzBEjS_U";
 
 const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
+};
+
+// Safe fallback data so the app never crashes
+const FALLBACK_DIRECTORY = {
+  kedarnath: {
+    Name: "Kedarnath Temple",
+    City: "Kedarnath",
+    State: "Uttarakhand",
+    history_geo_political: "Built by the Pandavas and revived by Adi Shankaracharya in the 8th century. Situated near the Mandakini river.",
+    image_url: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80",
+    weather: "5°C to 15°C (Cold)",
+    budget: "₹8,000 - ₹15,000",
+    transport_roadmap: "Accessible via Gaurikund trek or helicopter services.",
+    markets_food: "Local Garhwali food, tea stalls.",
+    category: "Spiritual"
+  }
 };
 
 export default function App() {
@@ -69,35 +84,32 @@ export default function App() {
 
   const sourceDirectory = dbDestinations.length > 0 
     ? dbDestinations.map((item: any) => ({
-        Name: item.name,
-        City: item.name,
-        State: item.state,
-        history_geo_political: item.description,
-        image_url: item.image_url,
+        Name: item.name || "Destination",
+        City: item.name || "City",
+        State: item.state || "State",
+        history_geo_political: item.description || "Explore this amazing destination.",
+        image_url: item.image_url || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
         weather: item.weather || "Live from Supabase",
         budget: item.budget || "Flexible",
         transport_roadmap: item.transport_roadmap || "Available via App Navigation",
         markets_food: item.markets_food || "Local Delicacies",
         category: item.category || "Heritage"
       }))
-    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map((item: any) => ({
-        ...item,
-        category: item.category || "Heritage"
-      }));
+    : Object.values(FALLBACK_DIRECTORY);
 
   const filteredDestinations = sourceDirectory.filter((data: any) => {
-    const matchesSearch = data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          data.State.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (data.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (data.State || "").toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesCategory = selectedCategory === "All" || 
-                            (data.category && data.category.toLowerCase().includes(selectedCategory.toLowerCase()));
+                            ((data.category || "").toLowerCase().includes(selectedCategory.toLowerCase()));
     
     return matchesSearch && matchesCategory;
   });
 
   const filteredPlannerDestinations = sourceDirectory.filter((data: any) =>
-    data.Name.toLowerCase().includes(plannerSearch.toLowerCase()) ||
-    data.State.toLowerCase().includes(plannerSearch.toLowerCase())
+    (data.Name || "").toLowerCase().includes(plannerSearch.toLowerCase()) ||
+    (data.State || "").toLowerCase().includes(plannerSearch.toLowerCase())
   );
 
   const handleSpotHotelSearch = (cityName: string) => {
