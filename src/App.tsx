@@ -11,7 +11,6 @@ const APP_CONFIG = {
 export default function App() {
   const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile' | 'legal'>('home');
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
   const [plannerSearch, setPlannerSearch] = useState("");
@@ -81,37 +80,10 @@ export default function App() {
       }))
     : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
 
-  // Smart & Flexible Filter Logic
-  const filteredDestinations = sourceDirectory.filter((data) => {
-    const query = searchQuery.toLowerCase();
-    const nameStr = (data.Name || "").toLowerCase();
-    const stateStr = (data.State || "").toLowerCase();
-    const descStr = (data.history_geo_political || "").toLowerCase();
-
-    // 1. Search query match
-    const matchesSearch = nameStr.includes(query) || stateStr.includes(query);
-    if (!matchesSearch) return false;
-
-    // 2. Category matching with flexible keywords
-    if (selectedCategory === "All") return true;
-
-    if (selectedCategory === "Mountains") {
-      const keywords = ["kedarnath", "uttarakhand", "himachal", "mountain", "shrine", "temple", "peak", "himalaya"];
-      return keywords.some(kw => nameStr.includes(kw) || stateStr.includes(kw) || descStr.includes(kw));
-    }
-
-    if (selectedCategory === "Heritage") {
-      const keywords = ["rajasthan", "heritage", "palace", "fort", "history", "delhi", "agra", "jaipur"];
-      return keywords.some(kw => nameStr.includes(kw) || stateStr.includes(kw) || descStr.includes(kw));
-    }
-
-    if (selectedCategory === "Beaches") {
-      const keywords = ["goa", "kerala", "beach", "sea", "backwater", "coastal"];
-      return keywords.some(kw => nameStr.includes(kw) || stateStr.includes(kw) || descStr.includes(kw));
-    }
-
-    return true;
-  });
+  const filteredDestinations = sourceDirectory.filter((data) =>
+    data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    data.State.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const filteredPlannerDestinations = sourceDirectory.filter((data) =>
     data.Name.toLowerCase().includes(plannerSearch.toLowerCase()) ||
@@ -131,54 +103,47 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-white pb-28 font-sans select-none antialiased">
       
-      {/* Top Header */}
-      <div className="bg-black/90 backdrop-blur-md border-b border-neutral-800 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
-        <div>
-          <h1 className="font-black text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">
-            INDIA TOUR TRIP 🇮🇳
-          </h1>
-          <p className="text-[9px] text-neutral-400">indiatourtrip.in • Enterprise Suite</p>
+      {/* Premium Header with Logo & Domain */}
+      <div className="bg-neutral-950/90 backdrop-blur-xl border-b border-neutral-900 px-5 py-4 flex justify-between items-center sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 via-amber-500 to-rose-500 flex items-center justify-center font-black text-lg text-white shadow-lg shadow-orange-950/50">
+            ✈️
+          </div>
+          <div>
+            <h1 className="font-black text-sm tracking-wide bg-gradient-to-r from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent">
+              INDIA TOUR TRIP
+            </h1>
+            <p className="text-[10px] text-orange-400 font-semibold tracking-wider">indiatourtrip.in</p>
+          </div>
         </div>
-        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">⚡ Supabase</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1.5 rounded-full border border-emerald-500/20 flex items-center gap-1 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live DB
+          </span>
+        </div>
       </div>
 
-      <div className="max-w-md mx-auto p-3 space-y-4">
+      <div className="max-w-md mx-auto p-4 space-y-5">
         
         {/* TAB 1: HOME */}
         {tab === 'home' && (
-          <div className="space-y-4">
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-neutral-400 text-xs">🔍</span>
+          <div className="space-y-5">
+            {/* Enhanced Search Bar placed with proper spacing */}
+            <div className="relative pt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-4 pt-1 text-neutral-400 text-sm">🔍</span>
               <input 
                 type="text" 
-                placeholder="Search destinations, forts, shrines..." 
+                placeholder="Explore destinations, forts, shrines..." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-neutral-900 rounded-2xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all"
+                className="w-full pl-11 pr-4 py-3.5 bg-neutral-900/90 rounded-2xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all shadow-inner"
               />
             </div>
 
-            {/* Smart Category Filter Pills */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-              {[
-                { id: 'All', label: '🔥 All Places' },
-                { id: 'Mountains', label: '🏔️ Mountains' },
-                { id: 'Heritage', label: '🏛️ Heritage' },
-                { id: 'Beaches', label: '🏖️ Beaches' }
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat.id ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg' : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:bg-neutral-800'}`}>
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="space-y-4">
+            <div className="space-y-5">
               {filteredDestinations.length > 0 ? (
                 filteredDestinations.map((dest, index) => (
-                  <div key={index} className="bg-neutral-900 rounded-3xl border border-neutral-800 overflow-hidden shadow-xl space-y-3 pb-3">
+                  <div key={index} className="bg-neutral-900/90 rounded-3xl border border-neutral-800 overflow-hidden shadow-2xl space-y-3 pb-4">
                     <div className="relative h-52 bg-neutral-950 overflow-hidden">
                       <img 
                         src={dest.image_url} 
@@ -188,25 +153,25 @@ export default function App() {
                           e.target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/30 to-transparent"></div>
-                      <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-amber-400 font-bold border border-neutral-800">
+                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/30 to-transparent"></div>
+                      <div className="absolute top-3.5 right-3.5 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full text-[10px] text-amber-400 font-bold border border-white/10 shadow">
                         ☀️ {dest.weather}
                       </div>
                     </div>
 
-                    <div className="px-4 space-y-2 text-xs">
+                    <div className="px-4 space-y-2.5 text-xs">
                       <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
                       <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                       
                       <div className="flex gap-2.5 pt-2">
                         <button 
                           onClick={() => setActiveCityKey(dest.Name)} 
-                          className="w-1/2 py-3 bg-neutral-800 font-bold text-white rounded-2xl active:scale-95 transition-transform">
+                          className="w-1/2 py-3 bg-neutral-800 hover:bg-neutral-700 font-bold text-white rounded-2xl border border-neutral-700 active:scale-95 transition-all">
                           Full Guide →
                         </button>
                         <button 
                           onClick={() => handleSpotHotelSearch(dest.City || dest.Name)} 
-                          className="w-1/2 py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1">
+                          className="w-1/2 py-3 bg-gradient-to-r from-orange-500 to-amber-500 font-bold text-white rounded-2xl shadow-lg shadow-orange-950/50 active:scale-95 transition-all flex items-center justify-center gap-1.5">
                           🏨 Find Hotels
                         </button>
                       </div>
@@ -216,7 +181,7 @@ export default function App() {
               ) : (
                 <div className="text-center py-12 text-neutral-400 text-xs bg-neutral-900/50 rounded-3xl border border-neutral-800 p-6 space-y-2">
                   <p className="text-sm font-bold text-orange-400">🔍 No destinations found</p>
-                  <p>Try selecting "All Places" or searching with a broader keyword.</p>
+                  <p>Try searching with a different keyword.</p>
                 </div>
               )}
             </div>
