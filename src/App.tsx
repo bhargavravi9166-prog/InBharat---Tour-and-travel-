@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
+import { Analytics } from '@vercel/analytics/react';
 
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kd2N2dWtobHB2and4bXNraWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDg1NzAsImV4cCI6MjEwNzIyNDU3MH0.fg4qUeUD1Jq816546cqtBpMyUfeSdAvwNouLzBEjS_U";
@@ -8,7 +9,7 @@ const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
-// Server-side / Client smart mapper for real surrounding spots of any location
+// Smart nearby spots mapper
 const getSmartNearbySpots = (name: string, state: string) => {
   const normalized = name.toLowerCase();
   if (normalized.includes("badrinath")) return "Tapt Kund, Mana Village, Vasudhara Falls, Vyas Gufa";
@@ -19,7 +20,6 @@ const getSmartNearbySpots = (name: string, state: string) => {
   if (normalized.includes("varanasi")) return "Kashi Vishwanath, Dashashwamedh Ghat, Sarnath, Assi Ghat";
   if (normalized.includes("manali")) return "Solang Valley, Rohtang Pass, Hadimba Temple, Vashisht Springs";
   
-  // Generic smart fallback based on the city/state name so it's always unique and relevant
   return `${name} Viewpoint, Heritage Market & ${state} Central Museum`;
 };
 
@@ -163,7 +163,6 @@ export default function App() {
         const name = item.name || "Destination";
         const state = item.state || "India";
         
-        // Use database field if available, otherwise generate smart nearby spots dynamically
         const dbNearby = item.nearest_spot || item.nearby || item.nearest_spots;
         const finalNearby = (dbNearby && dbNearby.trim() !== "") 
           ? dbNearby 
@@ -220,6 +219,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-white pb-28 font-sans select-none antialiased">
       
+      {/* Vercel Analytics Tracker Integration */}
+      <Analytics />
+
       {/* Premium Header with Custom Logo */}
       <div className="bg-neutral-950/90 backdrop-blur-xl border-b border-neutral-900 px-5 py-3 flex justify-between items-center sticky top-0 z-40">
         <div className="flex items-center gap-3 w-36">
