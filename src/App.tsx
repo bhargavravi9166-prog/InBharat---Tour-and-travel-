@@ -9,16 +9,16 @@ const APP_CONFIG = {
 };
 
 export default function App() {
-  const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile' | 'legal'>('home');
+  const [tab, setTab] = useState('home');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
+  const [activeCityKey, setActiveCityKey] = useState(null);
 
   const [plannerSearch, setPlannerSearch] = useState("");
   const [selectedDestKey, setSelectedDestKey] = useState("kedarnath");
-  const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
+  const [generatedItinerary, setGeneratedItinerary] = useState(null);
 
-  const [dbDestinations, setDbDestinations] = useState<any[]>([]);
+  const [dbDestinations, setDbDestinations] = useState([]);
 
   useEffect(() => {
     async function fetchDestinationsFromSupabase() {
@@ -44,7 +44,7 @@ export default function App() {
   const [enquiryName, setEnquiryName] = useState("");
   const [enquiryMessage, setEnquiryMessage] = useState("");
 
-  const handleDirectMailSubmit = (e: React.FormEvent) => {
+  const handleDirectMailSubmit = (e) => {
     e.preventDefault();
     if (!enquiryName || !enquiryMessage) {
       alert("Please fill in both your name and message!");
@@ -62,7 +62,7 @@ export default function App() {
   const [trainTo, setTrainTo] = useState("");
 
   const [hotelCity, setHotelCity] = useState("");
-  const [hotelResults, setHotelResults] = useState<any[] | null>(null);
+  const [hotelResults, setHotelResults] = useState(null);
 
   const [navSource, setNavSource] = useState("");
   const [navDestination, setNavDestination] = useState("");
@@ -80,7 +80,7 @@ export default function App() {
         markets_food: item.markets_food || "Local Delicacies",
         category: item.category || "Heritage"
       }))
-    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map((item: any) => ({
+    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map(item => ({
         ...item,
         category: item.category || "Heritage"
       }));
@@ -89,7 +89,6 @@ export default function App() {
     const matchesSearch = data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           data.State.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Flexible filtering using includes to support composite category names and exact database names
     const matchesCategory = selectedCategory === "All" || 
                             (data.category && data.category.toLowerCase().includes(selectedCategory.toLowerCase()));
     
@@ -101,7 +100,7 @@ export default function App() {
     data.State.toLowerCase().includes(plannerSearch.toLowerCase())
   );
 
-  const handleSpotHotelSearch = (cityName: string) => {
+  const handleSpotHotelSearch = (cityName) => {
     setHotelCity(cityName);
     setHotelResults([
       { id: 1, name: `${cityName} Heritage Stay`, price: "₹2,499 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" },
@@ -151,7 +150,7 @@ export default function App() {
               />
             </div>
 
-            {/* Category Filter Buttons including Wildlife Sanctuary */}
+            {/* Category Filter Buttons */}
             <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
               {['All', 'Heritage', 'Spiritual', 'Honeymoon', 'Hill Station', 'Beach', 'Wildlife Sanctuary'].map((cat) => (
                 <button
@@ -177,7 +176,7 @@ export default function App() {
                         src={dest.image_url} 
                         alt={dest.Name} 
                         className="w-full h-full object-cover" 
-                        onError={(e: any) => {
+                        onError={(e) => {
                           e.target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
                         }}
                       />
