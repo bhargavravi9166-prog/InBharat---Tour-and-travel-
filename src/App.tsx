@@ -11,7 +11,7 @@ const APP_CONFIG = {
 
 // Smart nearby spots mapper
 const getSmartNearbySpots = (name: string, state: string) => {
-  const normalized = name.toLowerCase();
+  const normalized = (name || "").toLowerCase();
   if (normalized.includes("badrinath")) return "Tapt Kund, Mana Village, Vasudhara Falls, Vyas Gufa";
   if (normalized.includes("kedarnath")) return "Bhairavnath Temple, Vasuki Tal, Gaurikund, Shankaracharya Samadhi";
   if (normalized.includes("taj mahal") || normalized.includes("agra")) return "Agra Fort, Mehtab Bagh, Jama Masjid, Itimad-ud-Daulah";
@@ -20,7 +20,7 @@ const getSmartNearbySpots = (name: string, state: string) => {
   if (normalized.includes("varanasi")) return "Kashi Vishwanath, Dashashwamedh Ghat, Sarnath, Assi Ghat";
   if (normalized.includes("manali")) return "Solang Valley, Rohtang Pass, Hadimba Temple, Vashisht Springs";
   
-  return `${name} Viewpoint, Heritage Market & ${state} Central Museum`;
+  return `${name || "Destination"} Viewpoint, Heritage Market & ${state || "India"} Central Museum`;
 };
 
 // Custom Professional Logo Component
@@ -101,6 +101,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile' | 'legal'>('home');
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
   const [plannerSearch, setPlannerSearch] = useState("");
@@ -112,7 +113,8 @@ export default function App() {
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/destinations?select=*`, {
+        // Updated to fetch from 'category' table as per your database structure
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -160,11 +162,12 @@ export default function App() {
 
   const sourceDirectory = dbDestinations.length > 0 
     ? dbDestinations.map(item => {
-        const name = item.name || "Destination";
-        const state = item.state || "India";
+        const name = item.name || item.title || "Destination";
+        const state = item.state || item.country || "India";
+        const category = item.category || item.type || "General";
         
         const dbNearby = item.nearest_spot || item.nearby || item.nearest_spots;
-        const finalNearby = (dbNearby && dbNearby.trim() !== "") 
+        const finalNearby = (dbNearby && String(dbNearby).trim() !== "") 
           ? dbNearby 
           : getSmartNearbySpots(name, state);
 
@@ -172,8 +175,9 @@ export default function App() {
           Name: name,
           City: name,
           State: state,
-          history_geo_political: item.description || "Explore this amazing destination.",
-          image_url: item.image_url || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
+          Category: category,
+          history_geo_political: item.description || item.history || "Explore this amazing destination.",
+          image_url: item.image_url || item.image || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
           weather: item.weather || "Pleasant",
           budget: item.budget || "₹5,000 - ₹10,000",
           transport_roadmap: item.transport_roadmap || "Accessible via local transit & cabs.",
@@ -181,16 +185,24 @@ export default function App() {
           nearest_spot: finalNearby
         };
       })
-    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
+    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map((item: any) => ({
+        ...item,
+        Category: item.Category || "General"
+      }));
 
-  const filteredDestinations = sourceDirectory.filter((data) =>
-    data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    data.State.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Extract unique categories for filter pills
+  const availableCategories = ["All", ...Array.from(new Set(sourceDirectory.map(d => d.Category))).filter(Boolean)];
+
+  const filteredDestinations = sourceDirectory.filter((data) => {
+    const matchesSearch = (data.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (data.State || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || data.Category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const filteredPlannerDestinations = sourceDirectory.filter((data) =>
-    data.Name.toLowerCase().includes(plannerSearch.toLowerCase()) ||
-    data.State.toLowerCase().includes(plannerSearch.toLowerCase())
+    (data.Name || "").toLowerCase().includes(plannerSearch.toLowerCase()) ||
+    (data.State || "").toLowerCase().includes(plannerSearch.toLowerCase())
   );
 
   const handleSpotHotelSearch = (cityName: string) => {
@@ -238,7 +250,7 @@ export default function App() {
         
         {/* TAB 1: HOME */}
         {tab === 'home' && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="relative pt-1">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 pt-1 text-neutral-400 text-sm">🔍</span>
               <input 
@@ -249,6 +261,21 @@ export default function App() {
                 className="w-full pl-11 pr-4 py-3.5 bg-neutral-900/90 rounded-2xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all shadow-inner"
               />
             </div>
+
+            {/* Category Filter Horizontal Scroll */}
+            {availableCategories.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {availableCategories.map((cat, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all border ${selectedCategory === cat ? 'bg-orange-500 text-white border-orange-400 shadow-md shadow-orange-950' : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-700'}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="space-y-5">
               {filteredDestinations.length > 0 ? (
@@ -270,7 +297,10 @@ export default function App() {
                     </div>
 
                     <div className="px-4 space-y-2.5 text-xs">
-                      <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
+                      <div className="flex justify-between items-start">
+                        <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
+                        <span className="text-[10px] bg-neutral-950 px-2.5 py-1 rounded-lg text-neutral-400 border border-neutral-800">{dest.Category}</span>
+                      </div>
                       <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                       
                       {/* Nearby Spots Tag */}
@@ -297,7 +327,7 @@ export default function App() {
               ) : (
                 <div className="text-center py-12 text-neutral-400 text-xs bg-neutral-900/50 rounded-3xl border border-neutral-800 p-6 space-y-2">
                   <p className="text-sm font-bold text-orange-400">🔍 No destinations found</p>
-                  <p>Try searching with a different keyword.</p>
+                  <p>Try searching with a different keyword or category.</p>
                 </div>
               )}
             </div>
