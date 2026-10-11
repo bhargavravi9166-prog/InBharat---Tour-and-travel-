@@ -144,18 +144,26 @@ export default function App() {
   const [navDestination, setNavDestination] = useState("");
 
   const sourceDirectory = dbDestinations.length > 0 
-    ? dbDestinations.map(item => ({
-        Name: item.name,
-        City: item.name,
-        State: item.state,
-        history_geo_political: item.description,
-        image_url: item.image_url,
-        weather: item.weather || "Live from Supabase",
-        budget: item.budget || "Flexible",
-        transport_roadmap: item.transport_roadmap || "Available via App Navigation",
-        markets_food: item.markets_food || "Local Delicacies",
-        nearest_spot: item.nearest_spot || "Local Viewpoints & Markets"
-      }))
+    ? dbDestinations.map(item => {
+        const destName = item.name || "Destination";
+        const destState = item.state || "India";
+        
+        // Smart Dynamic Nearest Spot Generator for EVERY destination
+        const dynamicNearestSpot = item.nearest_spot || item.nearby || item.nearest_spots || `${destName} Viewpoint, Heritage Market & ${destState} Central Square`;
+
+        return {
+          Name: destName,
+          City: destName,
+          State: destState,
+          history_geo_political: item.description || "Explore this amazing destination.",
+          image_url: item.image_url || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
+          weather: item.weather || "Pleasant",
+          budget: item.budget || "₹5,000 - ₹10,000",
+          transport_roadmap: item.transport_roadmap || "Accessible via local transit & cabs.",
+          markets_food: item.markets_food || "Local street food & handicraft markets.",
+          nearest_spot: dynamicNearestSpot
+        };
+      })
     : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
 
   const filteredDestinations = sourceDirectory.filter((data) =>
@@ -245,9 +253,10 @@ export default function App() {
                       <h2 className="text-base font-bold text-white">{dest.Name} <span className="text-xs text-orange-400 font-normal">({dest.State})</span></h2>
                       <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                       
-                      <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 text-[11px] flex items-center gap-2">
-                        <span className="text-orange-400 font-bold">📍 Nearest Spot:</span>
-                        <span className="text-neutral-300 truncate">{dest.nearest_spot}</span>
+                      {/* Dynamic Nearest Spot Tag for EVERY Destination */}
+                      <div className="bg-neutral-950 px-3 py-2 rounded-xl border border-neutral-800 text-[11px] flex items-center justify-between">
+                        <span className="text-orange-400 font-bold flex items-center gap-1">📍 Nearest Spot:</span>
+                        <span className="text-neutral-300 font-medium truncate max-w-[200px]">{dest.nearest_spot}</span>
                       </div>
 
                       <div className="flex gap-2.5 pt-2">
@@ -338,7 +347,7 @@ export default function App() {
             <div className="bg-neutral-900 p-4 rounded-3xl border border-neutral-800 space-y-3">
               <h2 className="font-bold text-sm text-amber-400">🏨 Hotel Booking (Affiliate Ready)</h2>
               <input type="text" placeholder="Enter City or Spot" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} className="w-full p-3 bg-neutral-950 rounded-2xl border border-neutral-800 text-white"/>
-              <button onClick={() => setHotelResults([{ id: 1, name: `${hotelCity || 'Local'} Heritage Palace`, price: "₹3,499 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }, { id: 2, name: `${hotelCity || 'Local'} Luxury Stay`, price: "₹4,899 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }])} className="w-full py-3 bg-orange-500 font-bold text-white rounded-2xl">Search Hotels</button>
+              <button onClick={() => setHotelResults([{ id: 1, name: `${hotelCity || 'Local'} Heritage Palace`, price: "₹2,499 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }, { id: 2, name: `${hotelCity || 'Local'} Luxury Stay`, price: "₹3,899 / night", affiliateUrl: "https://www.makemytrip.com/hotels/" }])} className="w-full py-3 bg-orange-500 font-bold text-white rounded-2xl">Search Hotels</button>
               {hotelResults && hotelResults.map(h => (
                 <div key={h.id} className="bg-neutral-950 p-3 rounded-2xl flex justify-between items-center border border-neutral-800">
                   <div>
