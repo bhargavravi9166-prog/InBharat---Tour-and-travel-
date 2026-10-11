@@ -7,22 +7,6 @@ const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
-// Safe fallback data so the app never crashes
-const FALLBACK_DIRECTORY = {
-  kedarnath: {
-    Name: "Kedarnath Temple",
-    City: "Kedarnath",
-    State: "Uttarakhand",
-    history_geo_political: "Built by the Pandavas and revived by Adi Shankaracharya in the 8th century. Situated near the Mandakini river.",
-    image_url: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80",
-    weather: "5°C to 15°C (Cold)",
-    budget: "₹8,000 - ₹15,000",
-    transport_roadmap: "Accessible via Gaurikund trek or helicopter services.",
-    markets_food: "Local Garhwali food, tea stalls.",
-    category: "Spiritual"
-  }
-};
-
 export default function App() {
   const [tab, setTab] = useState<string>('home');
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -82,20 +66,19 @@ export default function App() {
   const [navSource, setNavSource] = useState<string>("");
   const [navDestination, setNavDestination] = useState<string>("");
 
-  const sourceDirectory = dbDestinations.length > 0 
-    ? dbDestinations.map((item: any) => ({
-        Name: item.name || "Destination",
-        City: item.name || "City",
-        State: item.state || "State",
-        history_geo_political: item.description || "Explore this amazing destination.",
-        image_url: item.image_url || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
-        weather: item.weather || "Live from Supabase",
-        budget: item.budget || "Flexible",
-        transport_roadmap: item.transport_roadmap || "Available via App Navigation",
-        markets_food: item.markets_food || "Local Delicacies",
-        category: item.category || "Heritage"
-      }))
-    : Object.values(FALLBACK_DIRECTORY);
+  // Accurate mapping directly from Supabase columns (name, state, description, image_url, category)
+  const sourceDirectory = dbDestinations.map((item: any) => ({
+    Name: item.name || item.Name || "Destination",
+    City: item.name || item.City || "City",
+    State: item.state || item.State || "State",
+    history_geo_political: item.description || item.history_geo_political || "Explore this amazing destination.",
+    image_url: item.image_url || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
+    weather: item.weather || "Live from Supabase",
+    budget: item.budget || "Flexible",
+    transport_roadmap: item.transport_roadmap || "Available via App Navigation",
+    markets_food: item.markets_food || "Local Delicacies",
+    category: item.category || "Heritage"
+  }));
 
   const filteredDestinations = sourceDirectory.filter((data: any) => {
     const matchesSearch = (data.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
