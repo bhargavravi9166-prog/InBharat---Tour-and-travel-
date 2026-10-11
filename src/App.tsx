@@ -11,6 +11,7 @@ const APP_CONFIG = {
 export default function App() {
   const [tab, setTab] = useState<'home' | 'planner' | 'travel' | 'profile' | 'legal'>('home');
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [activeCityKey, setActiveCityKey] = useState<string | null>(null);
 
   const [plannerSearch, setPlannerSearch] = useState("");
@@ -22,7 +23,7 @@ export default function App() {
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/destinations?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/Category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -73,17 +74,23 @@ export default function App() {
         State: item.state,
         history_geo_political: item.description,
         image_url: item.image_url,
-        weather: "Live from Supabase",
-        budget: "Flexible",
-        transport_roadmap: "Available via App Navigation",
-        markets_food: "Local Delicacies"
+        weather: item.weather || "Live from Supabase",
+        budget: item.budget || "Flexible",
+        transport_roadmap: item.transport_roadmap || "Available via App Navigation",
+        markets_food: item.markets_food || "Local Delicacies",
+        category: item.category || "General"
       }))
-    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY);
+    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map(item => ({
+        ...item,
+        category: "General"
+      }));
 
-  const filteredDestinations = sourceDirectory.filter((data) =>
-    data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    data.State.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDestinations = sourceDirectory.filter((data) => {
+    const matchesSearch = data.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          data.State.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || (data.category && data.category.toLowerCase() === selectedCategory.toLowerCase());
+    return matchesSearch && matchesCategory;
+  });
 
   const filteredPlannerDestinations = sourceDirectory.filter((data) =>
     data.Name.toLowerCase().includes(plannerSearch.toLowerCase()) ||
@@ -128,7 +135,7 @@ export default function App() {
         {/* TAB 1: HOME */}
         {tab === 'home' && (
           <div className="space-y-5">
-            {/* Enhanced Search Bar placed with proper spacing */}
+            {/* Enhanced Search Bar */}
             <div className="relative pt-1">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 pt-1 text-neutral-400 text-sm">🔍</span>
               <input 
@@ -138,6 +145,23 @@ export default function App() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-11 pr-4 py-3.5 bg-neutral-900/90 rounded-2xl border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500 transition-all shadow-inner"
               />
+            </div>
+
+            {/* Category Filter Buttons placed right below Search Bar */}
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+              {['All', 'Heritage', 'Spiritual', 'Honeymoon', 'Hill Station', 'Beach', 'Wildlife'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                    selectedCategory === cat 
+                      ? 'bg-orange-500 text-white border-orange-400 shadow-lg shadow-orange-950/50' 
+                      : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:bg-neutral-800'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
 
             <div className="space-y-5">
@@ -181,7 +205,7 @@ export default function App() {
               ) : (
                 <div className="text-center py-12 text-neutral-400 text-xs bg-neutral-900/50 rounded-3xl border border-neutral-800 p-6 space-y-2">
                   <p className="text-sm font-bold text-orange-400">🔍 No destinations found</p>
-                  <p>Try searching with a different keyword.</p>
+                  <p>Try searching with a different keyword or category.</p>
                 </div>
               )}
             </div>
