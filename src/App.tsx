@@ -9,7 +9,6 @@ const APP_CONFIG = {
   ADMIN_EMAIL: "C2studioindia@gmail.com",
 };
 
-// Smart property extractor to handle any database column name / casing
 const getField = (obj: any, keys: string[]) => {
   for (const k of keys) {
     if (obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== "") {
@@ -19,7 +18,6 @@ const getField = (obj: any, keys: string[]) => {
   return "";
 };
 
-// Smart nearby spots mapper
 const getSmartNearbySpots = (name: string, state: string) => {
   const normalized = (name || "").toLowerCase();
   if (normalized.includes("badrinath")) return "Tapt Kund, Mana Village, Vasudhara Falls, Vyas Gufa";
@@ -33,7 +31,6 @@ const getSmartNearbySpots = (name: string, state: string) => {
   return `${name || "Destination"} Viewpoint, Heritage Market & ${state || "India"} Central Museum`;
 };
 
-// Custom Professional Logo Component
 function IndiaTourTripLogo({ className = "w-10 h-10" }: { className?: string }) {
   return (
     <svg
@@ -80,15 +77,13 @@ export default function App() {
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        // Fetching directly from the 'category' table as requested
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/Category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
           }
         });
         const data = await response.json();
-        console.log("Supabase Category Data Loaded:", data);
         if (Array.isArray(data) && data.length > 0) {
           setDbDestinations(data);
         }
@@ -128,7 +123,7 @@ export default function App() {
   const [navSource, setNavSource] = useState("");
   const [navDestination, setNavDestination] = useState("");
 
-  const sourceDirectory = dbDestinations.length > 0 
+  const rawSourceDirectory = dbDestinations.length > 0 
     ? dbDestinations.map(item => {
         const name = getField(item, ['name', 'Name', 'NAME', 'title', 'Title', 'destination', 'Destination']) || "Destination";
         const state = getField(item, ['state', 'State', 'STATE', 'country', 'Country', 'region', 'Region']) || "India";
@@ -158,14 +153,25 @@ export default function App() {
         Category: item.Category || "General"
       }));
 
-  // Extract unique categories for filter pills
+  // SORTING: Keep Indian destinations at the very top
+  const sourceDirectory = [...rawSourceDirectory].sort((a, b) => {
+    const aIsIndia = (a.State || "").toLowerCase().includes("india") || !(a.State || "").toLowerCase().includes("maldives");
+    const bIsIndia = (b.State || "").toLowerCase().includes("india") || !(b.State || "").toLowerCase().includes("maldives");
+    if (aIsIndia && !bIsIndia) return -1;
+    if (!aIsIndia && bIsIndia) return 1;
+    return 0;
+  });
+
   const availableCategories = ["All", ...Array.from(new Set(sourceDirectory.map(d => d.Category))).filter(Boolean)];
 
   const filteredDestinations = sourceDirectory.filter((data) => {
     const matchesSearch = (data.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (data.State || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (data.Category || "").toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || data.Category === selectedCategory;
+    
+    const matchesCategory = selectedCategory === "All" || 
+                            (data.Category || "").toLowerCase().trim() === selectedCategory.toLowerCase().trim();
+    
     return matchesSearch && matchesCategory;
   });
 
@@ -201,7 +207,6 @@ export default function App() {
     <div className="min-h-screen bg-black text-white pb-28 font-sans select-none antialiased">
       <Analytics />
 
-      {/* Header */}
       <div className="bg-neutral-950/90 backdrop-blur-xl border-b border-neutral-900 px-5 py-3 flex justify-between items-center sticky top-0 z-40">
         <div className="flex items-center gap-3 w-36">
           <IndiaTourTripLogo className="w-full h-auto" />
@@ -215,7 +220,6 @@ export default function App() {
 
       <div className="max-w-md mx-auto p-4 space-y-5">
         
-        {/* TAB 1: HOME */}
         {tab === 'home' && (
           <div className="space-y-4">
             <div className="relative pt-1">
@@ -229,7 +233,6 @@ export default function App() {
               />
             </div>
 
-            {/* Category Filter Horizontal Scroll Pills */}
             {availableCategories.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                 {availableCategories.map((cat, idx) => (
@@ -270,7 +273,6 @@ export default function App() {
                       </div>
                       <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">{dest.history_geo_political}</p>
                       
-                      {/* Nearby Spots Tag */}
                       <div className="bg-neutral-950 px-3 py-2 rounded-xl border border-neutral-800 text-[11px] flex items-center justify-between">
                         <span className="text-orange-400 font-bold flex items-center gap-1 shrink-0">📍 Nearby Spots:</span>
                         <span className="text-neutral-300 font-medium truncate max-w-[210px] ml-1">{dest.nearest_spot}</span>
@@ -301,7 +303,6 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: AI TRIP PLANNER */}
         {tab === 'planner' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-3xl border border-neutral-800 space-y-3">
@@ -358,7 +359,6 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: TRAVEL TOOLS */}
         {tab === 'travel' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-4 rounded-3xl border border-neutral-800 space-y-3">
@@ -392,7 +392,6 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: PROFILE */}
         {tab === 'profile' && (
           <div className="space-y-4 text-xs">
             <div className="bg-neutral-900 p-5 rounded-3xl border border-neutral-800 text-center space-y-4 shadow-xl">
@@ -443,7 +442,6 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: LEGAL */}
         {tab === 'legal' && (
           <div className="space-y-4 text-xs bg-neutral-900 p-4 rounded-3xl border border-neutral-800">
             <div className="flex justify-between items-center border-b border-neutral-800 pb-2">
@@ -479,7 +477,6 @@ export default function App() {
 
       </div>
 
-      {/* FULL GUIDE DETAIL MODAL */}
       {activeCityKey && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-3xl p-4 space-y-3 text-xs max-h-[85vh] overflow-y-auto shadow-2xl">
@@ -524,7 +521,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Enquiry Modal */}
       {showEnquiryModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-3xl p-4 space-y-4 text-xs shadow-2xl">
@@ -578,7 +574,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-neutral-950 border-t border-neutral-800 py-3 px-6 flex justify-around items-center z-40 max-w-md mx-auto rounded-t-3xl shadow-2xl">
         <button onClick={() => setTab('home')} className={`flex flex-col items-center gap-0.5 text-xs font-bold transition-all ${tab === 'home' ? 'text-orange-400 scale-110' : 'text-neutral-500'}`}>
           <span className="text-lg">🏠</span> Home
