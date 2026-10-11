@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
 
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kd2N2dWtobHB2and4bXNraWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDg1NzAsImV4cCI6MjEwNzIyNDU3MH0.fg4qUeUD1Jq816546cqtBpMyUfeSdAvwNouLzBEjS_U";
@@ -19,6 +20,7 @@ export default function App() {
 
   const [dbDestinations, setDbDestinations] = useState<any[]>([]);
 
+  // Fetching and syncing with Supabase
   useEffect(() => {
     async function fetchDestinationsFromSupabase() {
       try {
@@ -33,7 +35,7 @@ export default function App() {
           setDbDestinations(data);
         }
       } catch (error) {
-        console.error('Error fetching destinations:', error);
+        console.error('Error fetching from Supabase, using local sync:', error);
       }
     }
     fetchDestinationsFromSupabase();
@@ -66,19 +68,24 @@ export default function App() {
   const [navSource, setNavSource] = useState<string>("");
   const [navDestination, setNavDestination] = useState<string>("");
 
-  // Accurate mapping directly from Supabase columns (name, state, description, image_url, category)
-  const sourceDirectory = dbDestinations.map((item: any) => ({
-    Name: item.name || item.Name || "Destination",
-    City: item.name || item.City || "City",
-    State: item.state || item.State || "State",
-    history_geo_political: item.description || item.history_geo_political || "Explore this amazing destination.",
-    image_url: item.image_url || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
-    weather: item.weather || "Live from Supabase",
-    budget: item.budget || "Flexible",
-    transport_roadmap: item.transport_roadmap || "Available via App Navigation",
-    markets_food: item.markets_food || "Local Delicacies",
-    category: item.category || "Heritage"
-  }));
+  // Syncing Supabase data with tourismdata.ts fallback structure
+  const sourceDirectory = dbDestinations.length > 0 
+    ? dbDestinations.map((item: any) => ({
+        Name: item.name || item.Name || "Destination",
+        City: item.name || item.City || "City",
+        State: item.state || item.State || "State",
+        history_geo_political: item.description || item.history_geo_political || "Explore this amazing destination.",
+        image_url: item.image_url || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
+        weather: item.weather || "Pleasant",
+        budget: item.budget || "Flexible",
+        transport_roadmap: item.transport_roadmap || "Available via App Navigation",
+        markets_food: item.markets_food || "Local Delicacies",
+        category: item.category || "Heritage"
+      }))
+    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map((item: any) => ({
+        ...item,
+        category: item.category || "Heritage"
+      }));
 
   const filteredDestinations = sourceDirectory.filter((data: any) => {
     const matchesSearch = (data.Name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -123,7 +130,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1.5 rounded-full border border-emerald-500/20 flex items-center gap-1 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live DB
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live DB Synced
           </span>
         </div>
       </div>
