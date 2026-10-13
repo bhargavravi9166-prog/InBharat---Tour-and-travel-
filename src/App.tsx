@@ -18,6 +18,7 @@ const getField = (obj: any, keys: string[]) => {
   return "";
 };
 
+// Smart nearby spots generator fallback if missing from CSV
 const getSmartNearbySpots = (name: string, state: string) => {
   const normalized = (name || "").toLowerCase();
   if (normalized.includes("badrinath")) return "Tapt Kund, Mana Village, Vasudhara Falls, Vyas Gufa";
@@ -77,7 +78,7 @@ export default function App() {
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/Category?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -129,6 +130,7 @@ export default function App() {
         const state = getField(item, ['state', 'State', 'STATE', 'country', 'Country', 'region', 'Region']) || "India";
         const category = getField(item, ['category', 'Category', 'CATEGORY', 'type', 'Type', 'genre', 'Genre']) || "General";
         
+        // Smart fallback for missing nearby spots in database
         const dbNearby = getField(item, ['nearest_spot', 'nearest_spots', 'nearby', 'Nearby', 'spots', 'Spots']);
         const finalNearby = (dbNearby && String(dbNearby).trim() !== "") 
           ? dbNearby 
@@ -153,12 +155,17 @@ export default function App() {
         Category: item.Category || "General"
       }));
 
-  // SORTING: Keep Indian destinations at the very top
+  // SORTING: Push foreign spots down, keep Indian spots strictly on top
   const sourceDirectory = [...rawSourceDirectory].sort((a, b) => {
-    const aIsIndia = (a.State || "").toLowerCase().includes("india") || !(a.State || "").toLowerCase().includes("maldives");
-    const bIsIndia = (b.State || "").toLowerCase().includes("india") || !(b.State || "").toLowerCase().includes("maldives");
-    if (aIsIndia && !bIsIndia) return -1;
-    if (!aIsIndia && bIsIndia) return 1;
+    const foreignKeywords = ["maldives", "switzerland", "italy", "france", "dubai", "bali", "singapore", "paris"];
+    const aText = `${a.Name} ${a.State}`.toLowerCase();
+    const bText = `${b.Name} ${b.State}`.toLowerCase();
+    
+    const aIsForeign = foreignKeywords.some(kw => aText.includes(kw));
+    const bIsForeign = foreignKeywords.some(kw => bText.includes(kw));
+
+    if (!aIsForeign && bIsForeign) return -1;
+    if (aIsForeign && !bIsForeign) return 1;
     return 0;
   });
 
