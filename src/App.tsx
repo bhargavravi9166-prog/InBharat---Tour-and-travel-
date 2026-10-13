@@ -1,5 +1,4 @@
-Import React, { useState, useEffect } from 'react';
-import { MASTER_INDIA_TOURISM_DIRECTORY } from './tourismdata';
+import React, { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 
 const SUPABASE_URL = "https://mdwcvukhlpvjwxmskidg.supabase.co";
@@ -18,6 +17,7 @@ const getField = (obj: any, keys: string[]) => {
   return "";
 };
 
+// Smart fallback nearby spots generator
 const getSmartNearbySpots = (name: string, state: string) => {
   const normalized = (name || "").toLowerCase();
   if (normalized.includes("badrinath")) return "Tapt Kund, Mana Village, Vasudhara Falls, Vyas Gufa";
@@ -77,7 +77,7 @@ export default function App() {
   useEffect(() => {
     async function fetchDestinations() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/Category?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/category?select=*`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -123,42 +123,39 @@ export default function App() {
   const [navSource, setNavSource] = useState("");
   const [navDestination, setNavDestination] = useState("");
 
-  const rawSourceDirectory = dbDestinations.length > 0 
-    ? dbDestinations.map(item => {
-        const name = getField(item, ['name', 'Name', 'NAME', 'title', 'Title', 'destination', 'Destination']) || "Destination";
-        const state = getField(item, ['state', 'State', 'STATE', 'country', 'Country', 'region', 'Region']) || "India";
-        const category = getField(item, ['category', 'Category', 'CATEGORY', 'type', 'Type', 'genre', 'Genre']) || "General";
-        
-        const dbNearby = getField(item, ['nearest_spot', 'nearest_spots', 'nearby', 'Nearby', 'spots', 'Spots']);
-        const finalNearby = (dbNearby && String(dbNearby).trim() !== "") 
-          ? dbNearby 
-          : getSmartNearbySpots(name, state);
+  const sourceDirectory = dbDestinations.map(item => {
+    const name = getField(item, ['name', 'Name', 'NAME', 'title', 'Title', 'destination', 'Destination']) || "Destination";
+    const state = getField(item, ['state', 'State', 'STATE', 'country', 'Country', 'region', 'Region']) || "India";
+    const category = getField(item, ['category', 'Category', 'CATEGORY', 'type', 'Type', 'genre', 'Genre']) || "General";
+    
+    const dbNearby = getField(item, ['nearest_spot', 'nearest_spots', 'nearby', 'Nearby', 'spots', 'Spots']);
+    const finalNearby = (dbNearby && String(dbNearby).trim() !== "") 
+      ? dbNearby 
+      : getSmartNearbySpots(name, state);
 
-        return {
-          Name: name,
-          City: name,
-          State: state,
-          Category: category,
-          history_geo_political: getField(item, ['description', 'Description', 'history', 'History', 'details', 'Details']) || "Explore this amazing destination.",
-          image_url: getField(item, ['image_url', 'image', 'Image', 'img', 'photo', 'Photo']) || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
-          weather: getField(item, ['weather', 'Weather']) || "Pleasant",
-          budget: getField(item, ['budget', 'Budget']) || "₹5,000 - ₹10,000",
-          transport_roadmap: getField(item, ['transport_roadmap', 'transport', 'Transport']) || "Accessible via local transit & cabs.",
-          markets_food: getField(item, ['markets_food', 'food', 'Food']) || "Local street food & handicraft markets.",
-          nearest_spot: finalNearby
-        };
-      })
-    : Object.values(MASTER_INDIA_TOURISM_DIRECTORY).map((item: any) => ({
-        ...item,
-        Category: item.Category || "General"
-      }));
+    return {
+      Name: name,
+      City: name,
+      State: state,
+      Category: category,
+      history_geo_political: getField(item, ['description', 'Description', 'history', 'History', 'details', 'Details']) || "Explore this amazing destination.",
+      image_url: getField(item, ['image_url', 'image', 'Image', 'img', 'photo', 'Photo']) || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80",
+      weather: getField(item, ['weather', 'Weather']) || "Pleasant",
+      budget: getField(item, ['budget', 'Budget']) || "₹5,000 - ₹10,000",
+      transport_roadmap: getField(item, ['transport_roadmap', 'transport', 'Transport']) || "Accessible via local transit & cabs.",
+      markets_food: getField(item, ['markets_food', 'food', 'Food']) || "Local street food & handicraft markets.",
+      nearest_spot: finalNearby
+    };
+  }).sort((a, b) => {
+    const foreignKeywords = ["maldives", "switzerland", "italy", "france", "dubai", "bali", "singapore", "paris"];
+    const aText = `${a.Name} ${a.State}`.toLowerCase();
+    const bText = `${b.Name} ${b.State}`.toLowerCase();
+    
+    const aIsForeign = foreignKeywords.some(kw => aText.includes(kw));
+    const bIsForeign = foreignKeywords.some(kw => bText.includes(kw));
 
-  // SORTING: Keep Indian destinations at the very top
-  const sourceDirectory = [...rawSourceDirectory].sort((a, b) => {
-    const aIsIndia = (a.State || "").toLowerCase().includes("india") || !(a.State || "").toLowerCase().includes("maldives");
-    const bIsIndia = (b.State || "").toLowerCase().includes("india") || !(b.State || "").toLowerCase().includes("maldives");
-    if (aIsIndia && !bIsIndia) return -1;
-    if (!aIsIndia && bIsIndia) return 1;
+    if (!aIsForeign && bIsForeign) return -1;
+    if (aIsForeign && !bIsForeign) return 1;
     return 0;
   });
 
